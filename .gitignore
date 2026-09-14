@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# zip 파일 제외 (민감 정보 포함 가능성)
+*.zip

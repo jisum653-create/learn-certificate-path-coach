@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자격증 패스 코치 — MVP</title>
+<style>
+  :root {
+    --primary: #1976d2;
+    --primary-light: #e3f2fd;
+    --bg: #fafafa;
+    --card: #fff;
+    --border: #e0e0e0;
+    --text: #333;
+    --muted: #888;
+    --caution: #c00;
+    --warn-bg: #fff3cd;
+    --success-bg: #e8f5e9;
+    --info-bg: #e3f2fd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    line-height: 1.5;
+  }
+  .container { max-width: 860px; margin: 0 auto; padding: 16px; }
+  header { border-bottom: 1px solid var(--border); padding: 16px 0 12px; margin-bottom: 16px; }
+  header h1 { font-size: 22px; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  /* 섹션 공통 */
+  section { margin-bottom: 20px; }
+  .section-title { font-size: 15px; font-weight: 600; margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .card-caution { background: #fff5f5; border-left: 3px solid var(--caution); }
+  .card-warn { background: var(--warn-bg); border-left: 3px solid #f0ad4e; }
+  .card-success { background: var(--success-bg); border-left: 3px solid #388e3c; }
+  .card-info { background: var(--info-bg); border-left: 3px solid var(--primary); }
+
+  /* 대시보드 */
+  .used-info { font-size: 12px; color: var(--muted); padding: 6px 10px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px; }
+  .used-info strong { color: var(--text); }
+  .rec-primary { margin-bottom: 14px; padding: 12px; background: #f5f5f5; border-radius: 6px; }
+  .rec-primary .name { font-size: 16px; font-weight: 600; }
+  .rec-primary .reason { color: #555; margin: 4px 0; }
+  .rec-primary .meta { font-size: 12px; color: var(--muted); }
+  .rec-alt { margin-bottom: 8px; padding: 8px; background: #fff; border-radius: 4px; }
+  .rec-alt .name { font-weight: 600; font-size: 13px; }
+  .rec-alt .reason { font-size: 12px; color: #777; }
+
+  /* 학습 경로 */
+  .path-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  @media (max-width: 600px) { .path-grid { grid-template-columns: 1fr; } }
+  .path-item { padding: 8px 10px; background: #f9f9f9; border-radius: 4px; font-size: 13px; }
+  .path-item .label { font-weight: 600; color: #555; display: block; margin-bottom: 2px; }
+  .paid-lecture { margin-top: 10px; padding: 8px 10px; background: var(--warn-bg); border-radius: 4px; font-size: 12px; }
+  .paid-lecture strong { color: #856404; }
+
+  /* 일정 */
+  .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; }
+  .schedule-item { padding: 8px; background: #f9f9f9; border-radius: 4px; font-size: 13px; text-align: center; }
+  .schedule-item .label { font-size: 11px; color: var(--muted); display: block; }
+  .schedule-item .value { font-weight: 600; font-size: 13px; }
+  .unconfirmed { color: var(--caution); font-size: 12px; margin-top: 6px; }
+
+  /* 계획 */
+  .plan-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+  .plan-table th, .plan-table td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; }
+  .plan-table th { background: #f5f5f5; font-size: 12px; }
+  .briefing { padding: 10px; background: var(--info-bg); border-radius: 4px; margin-top: 10px; font-size: 13px; }
+  .adjust-alert { padding: 8px 10px; background: var(--warn-bg); border-radius: 4px; font-size: 12px; margin-top: 8px; }
+
+  /* 대화창 */
+  .chat-box { border: 1px solid var(--border); border-radius: 8px; padding: 12px; min-height: 260px; max-height: 360px; overflow-y: auto; background: #fff; margin-bottom: 12px; }
+  .chat-msg { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; max-width: 85%; }
+  .chat-msg.user { background: var(--primary-light); margin-left: auto; text-align: right; }
+  .chat-msg.bot { background: #f5f5f5; margin-right: auto; }
+  .chat-msg .sender { font-size: 11px; color: var(--muted); margin-bottom: 2px; font-weight: 500; }
+  .chat-msg .text { font-size: 13px; white-space: pre-wrap; }
+  .chat-empty { text-align: center; color: var(--muted); padding: 40px 0; font-size: 13px; }
+
+  /* 입력 */
+  .input-row { display: flex; gap: 8px; }
+  .input-row input { flex: 1; padding: 10px 12px; font-size: 14px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
+  .input-row input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+  .input-row button { padding: 10px 18px; font-size: 14px; background: var(--primary); color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+  .input-row button:disabled { background: #aaa; cursor: not-allowed; }
+  .input-row button.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+
+  /* 모달 */
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal { background: #fff; border-radius: 8px; padding: 20px; width: 100%; max-width: 420px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  .modal h3 { margin: 0 0 10px; font-size: 16px; }
+  .modal p { font-size: 13px; color: #555; margin: 0 0 12px; }
+  .modal pre { font-size: 11px; background: #f5f5f5; padding: 8px; border-radius: 4px; white-space: pre-wrap; max-height: 140px; overflow: auto; margin-bottom: 12px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* 탭 */
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tab { padding: 6px 12px; font-size: 13px; background: #fff; border: 1px solid var(--border); border-radius: 4px 4px 0 0; cursor: pointer; }
+  .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* 상태 배지 */
+  .badge { display: inline-block; padding: 2px 8px; font-size: 11px; border-radius: 10px; background: #eee; color: #555; margin-left: 4px; }
+  .badge-success { background: #c8e6c9; color: #2e7d32; }
+  .badge-warn { background: var(--warn-bg); color: #856404; }
+
+  .btn-small { padding: 4px 8px; font-size: 11px; background: none; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; color: var(--muted); }
+  .btn-small:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-danger { color: var(--caution); border-color: #f5c6cb; }
+  .btn-danger:hover { border-color: var(--caution); color: var(--caution); }
+
+  .footer-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>자격증 패스 코치</h1>
+  <p>처음 자격증 준비를 시작하는 분을 위한 대화형 코치입니다. 대화하듯 물어보세요.</p>
+</header>
+
+<!-- 상태 표시 -->
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:12px; color:var(--muted);">
+  <span id="statusText">준비 완료 — 대화를 시작하세요</span>
+  <span id="profileBadge"></span>
+</div>
+
+<!-- ====== 대시보드: 추천 결과 ====== -->
+<section id="dashboardSection" class="hidden">
+  <div class="section-title">📊 추천 결과</div>
+  <div class="card">
+    <div id="usedInfoBox" class="used-info"></div>
+    <div id="recommendationContent"></div>
+  </div>
+</section>
+
+<!-- ====== 대화창 ====== -->
+<section>
+  <div class="section-title">💬 대화</div>
+  <div class="chat-box" id="chatBox">
+    <div class="chat-empty" id="chatEmpty">여기에 대화를 시작하세요.<br>예: "IT 분야 자격증 추천해줘", "정보처리기사 일정 알려줘"</div>
+  </div>
+  <div class="input-row">
+    <input id="chatInput" type="text" placeholder="대화를 시작하세요 (Enter: 전송, Shift+Enter: 줄바꿈)" autocomplete="off">
+    <button id="sendBtn" onclick="handleSend()">전송</button>
+  </div>
+</section>
+
+<!-- ====== 일정 카드 (P0-2) ====== -->
+<section id="scheduleSection" class="hidden">
+  <div class="section-title">📅 공식 시험 일정 — <span id="scheduleCertName"></span></div>
+  <div class="card">
+    <div class="schedule-grid" id="scheduleGrid"></div>
+    <div id="scheduleUnconfirmed" class="unconfirmed"></div>
+    <div style="margin-top:10px; font-size:12px; color:var(--muted);">
+      공식 출처: <span id="scheduleSource"></span> | 확인 날짜: <span id="scheduleDate"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 학습 계획 (P0-4) ====== -->
+<section id="planSection" class="hidden">
+  <div class="section-title">📋 학습 계획 — <span id="planCertName"></span></div>
+  <div class="card">
+    <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">
+      시험일까지 <span id="planTotalWeeks"></span>주 | 단계별 비율: 개념 40% / 문제풀이 25% / 기출 25% / 모의고사·복습 10%
+    </div>
+    <table class="plan-table" id="planTable"></table>
+    <div id="planBriefing" class="briefing"></div>
+    <div id="planAdjustAlert" class="adjust-alert"></div>
+    <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border);">
+      <button class="btn-small" onclick="showNotionConsent()">📓 Notion 학습 공간 생성 (동의 필요)</button>
+      <span id="notionStatus" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ====== P1 기능 탭 ====== -->
+<section id="p1Section" class="hidden">
+  <div class="section-title">🔧 추가 기능 (P1 — 데모 포함)</div>
+  <div class="tabs">
+    <div class="tab active" data-tab="p1-calendar" onclick="switchTab('p1-calendar')">캘린더 등록</div>
+    <div class="tab" data-tab="p1-next" onclick="switchTab('p1-next')">다음 경로</div>
+    <div class="tab" data-tab="p1-profile" onclick="switchTab('p1-profile')">프로필 변경</div>
+    <div class="tab" data-tab="p1-result" onclick="switchTab('p1-result')">결과 반영</div>
+    <div class="tab" data-tab="p1-validity" onclick="switchTab('p1-validity')">유효기간</div>
+    <div class="tab" data-tab="p1-guideline" onclick="switchTab('p1-guideline')">취업 가이드라인</div>
+  </div>
+
+  <!-- 캘린더 -->
+  <div class="tab-content active" id="tab-p1-calendar">
+    <div class="card">
+      <div style="font-size:13px; margin-bottom:8px;">Google Calendar에 공식 확정 일정을 등록합니다. <strong>동의 후 등록</strong>하며, 미등록 시 텍스트 일정으로 대체됩니다.</div>
+      <div id="calendarContent">
+        <div style="font-size:13px; color:var(--muted);">등록할 일정을 선택하거나, 아직 일정이 확인되지 않았으면 먼저 일정 확인을 진행하세요.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 다음 경로 -->
+  <div class="tab-content" id="tab-p1-next">
+    <div class="card">
+      <div style="font-size:13px; margin-bottom:8px;">자격증 취득 완료 시, 다음 단계를 제안합니다. 보유 자격증 갱신(동의 시)도 함께 처리합니다.</div>
+      <div id="nextContent">
+        <div style="font-size:13px; color:var(--muted);">취득 완료 정보를 입력하면 다음 추천이 표시됩니다.</div>
+        <div style="margin-top:8px;">
+          <input id="acquiredCert" type="text" placeholder="취득한 자격증명 (예: 정보처리기사)" style="padding:8px; border:1px solid var(--border); border-radius:4px; width:70%;">
+          <button class="btn-small" onclick="handleAcquired()">입력</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 프로필 변경 -->
+  <div class="tab-content" id="tab-p1-profile">
+    <div class="card">
+      <div style="font-size:13px; margin-bottom:8px;">프로필 조건이 바뀌면 기존 추천·계획을 재계산합니다. 이미 확인된 값은 함부로 바꾸지 않습니다.</div>
+      <div id="profileEditContent">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">현재 프로필:</div>
+        <pre id="currentProfileDisplay" style="font-size:11px; background:#f5f5f5; padding:8px; border-radius:4px; white-space:pre-wrap; max-height:150px; overflow:auto;"></pre>
+        <div style="margin-top:10px; font-size:12px;">변경할 항목을 간단히 입력해 주세요. (예: "가용시간을 하루 2시간으로 변경")</div>
+        <div style="margin-top:6px;">
+          <input id="profileChangeInput" type="text" placeholder="변경 내용 입력" style="padding:8px; border:1px solid var(--border); border-radius:4px; width:70%;">
+          <button class="btn-small" onclick="handleProfileChange()">적용</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 결과 반영 -->
+  <div class="tab-content" id="tab-p1-result">
+    <div class="card">
+      <div style="font-size:13px; margin-bottom:8px;">합격/불합격 결과를 반영하면 다음 단계가 조정됩니다.</div>
+      <div id="resultContent">
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input id="resultCert" type="text" placeholder="자격증명" style="padding:8px; border:1px solid var(--border); border-radius:4px; flex:1;">
+          <select id="resultStatus" style="padding:8px; border:1px solid var(--border); border-radius:4px;">
+            <option value="">결과 선택</option>
+            <option value="합격">합격</option>
+            <option value="불합격">불합격</option>
+          </select>
+          <button class="btn-small" onclick="handleResult()">반영</button>
+        </div>
+        <div id="resultMessage" style="font-size:13px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 유효기간 -->
+  <div class="tab-content" id="tab-p1-validity">
+    <div class="card">
+      <div style="font-size:13px; margin-bottom:8px;">보유 자격증·영어 성적 등 유효기간 있는 자산을 관리합니다. <strong>사용자가 원할 때만</strong> 진행하며, 원하지 않으면 이름·등급 중심만 확인합니다.</div>
+      <div id="validityContent">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">자격증의 취득 시점 또는 만료 시점을 알려주시면, 만료 임박·갱신 시점을 검토해 드립니다. (웹 크롤링으로 만료 시점 확인 가능)</div>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input id="validityCert" type="text" placeholder="자격증명" style="padding:8px; border:1px solid var(--border); border-radius:4px; flex:1;">
+          <input id="validityAcquired" type="text" placeholder="취득 시점 (예: 2024-03)" style="padding:8px; border:1px solid var(--border); border-radius:4px; flex:1;">
+          <input id="validityExpiry" type="text" placeholder="만료 시점 (예: 2026-03) 또는 비움" style="padding:8px; border:1px solid var(--border); border-radius:4px; flex:1;">
+        </div>
+        <button class="btn-small" onclick="handleValidity()">검토</button>
+        <div id="validityMessage" style="font-size:13px; margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 취업 가이드라인 -->
+  <div class="tab-content" id="tab-p1-guideline">
+    <div class="card card-info">
+      <div style="font-size:13px; margin-bottom:8px;">관심 공고·목표 직무가 있을 때만 표시됩니다. 없으면 이 블록은 출력하지 않습니다.</div>
+      <div id="guidelineContent">
+        <div style="font-size:13px; color:var(--muted);">관심 공고나 목표 직무를 입력하면, 채용공고 반복 요건 기반으로 직무 요약·필요 역량·자격증 연결·포트폴리오 방향·참고 공고를 제공합니다.</div>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <input id="guidelineJob" type="text" placeholder="관심 직무 또는 공고 링크/텍스트" style="padding:8px; border:1px solid var(--border); border-radius:4px; flex:1;">
+          <button class="btn-small" onclick="handleGuideline()">분석</button>
+        </div>
+        <div id="guidelineMessage" style="font-size:13px; margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 프로필 저장 동의 모달 ====== -->
+<div id="consentModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>프로필 저장 동의</h3>
+    <p>추천을 더 정확하게 맞춤화하려면 프로필 정보를 저장합니다. 저장 전 동의를 받습니다. 저장된 정보는 브라우저 로컬 스토리지에만 보관되며, 다른 기기에서는 사용할 수 없습니다.</p>
+    <pre id="consentProfileDisplay"></pre>
+    <div class="modal-actions">
+      <button class="btn-small" onclick="closeConsent()">나중에</button>
+      <button style="padding:8px 16px; background:var(--primary); color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="saveProfileConsent()">저장하고 사용</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Notion 동의 모달 ====== -->
+<div id="notionModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Notion 학습 공간 생성 — 동의 필요</h3>
+    <p><code>[자격증명] 학습 공간</code> 페이지를 Notion에 생성합니다. 부모 페이지 위치를 확인한 후 진행합니다.</p>
+    <p style="font-size:12px; color:var(--muted);">Notion 연동이 불가능하거나 페이지 생성이 실패하면, 워크스페이스 파일(서버 측 학습 공간 파일)로 대체합니다.</p>
+    <div style="margin:12px 0;">
+      <label>부모 페이지 URL 또는 위치:</label>
+      <input id="notionParentInput" type="text" placeholder="https://www.notion.so/..." style="width:100%; padding:8px; margin-top:4px; border:1px solid var(--border); border-radius:4px; font-size:12px;">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-small" onclick="closeNotionModal()">취소</button>
+      <button style="padding:8px 16px; background:var(--primary); color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="confirmNotion()">동의하고 생성</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 초기화 확인 모달 ====== -->
+<div id="resetModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>정말 초기화하시겠어요?</h3>
+    <p>저장된 프로필과 진행 내역이 모두 삭제됩니다.</p>
+    <div class="modal-actions">
+      <button class="btn-small" onclick="closeResetModal()">취소</button>
+      <button style="padding:8px 16px; background:#c00; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="confirmReset()">초기화</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note">
+  자격증 패스 코치 MVP · 민감 정보(API 키 등)는 서버 환경변수로만 관리, 클라이언트 소스·응답 JSON에 절대 노출하지 않음
+</div>
+
+</div>
+
+<script>
+// ============================================================
+// 데이터 및 상태
+// ============================================================
+
+const PROFILE_KEY = 'certCoachProfile';
+
+let state = {
+  profile: loadProfile(),
+  messages: [],
+  recommendation: null,
+  schedule: null,
+  plan: null,
+  notionStatus: '미연결', // '미연결' | '연결됨' | '실패-파일대체'
+  notionPageUrl: null,
+  calendarStatus: '미연결',
+  acquiredCerts: [],
+  resultStatus: null,
+};
+
+function loadProfile() {
+  try {
+    const saved = localStorage.getItem(PROFILE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) { console.warn('프로필 로드 오류', e); }
+  return {};
+}
+
+function saveProfileToStorage(profile) {
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  state.profile = profile;
+  updateProfileBadge();
+  document.getElementById('currentProfileDisplay').textContent = JSON.stringify(profile, null, 2) || '(프로필 없음)';
+}
+
+function clearProfile() {
+  localStorage.removeItem(PROFILE_KEY);
+  state.profile = {};
+  state.messages = [];
+  state.recommendation = null;
+  state.schedule = null;
+  state.plan = null;
+  state.notionPageUrl = null;
+  state.acquiredCerts = [];
+  state.resultStatus = null;
+  renderAll();
+  updateChat();
+  updateProfileBadge();
+}
+
+// ============================================================
+// 렌더링
+// ============================================================
+
+function renderAll() {
+  renderDashboard();
+  renderSchedule();
+  renderPlan();
+  renderP1();
+  updateProfileBadge();
+}
+
+function updateProfileBadge() {
+  const badge = document.getElementById('profileBadge');
+  if (state.profile.저장동의) {
+    badge.innerHTML = '✅ 프로필 저장됨 <button class="btn-small btn-danger" onclick="showResetConfirm()" style="margin-left:4px;">초기화</button>';
+  } else {
+    badge.textContent = '프로필 미저장';
+  }
+}
+
+function updateChat() {
+  const chatBox = document.getElementById('chatBox');
+  const empty = document.getElementById('chatEmpty');
+  chatBox.innerHTML = '';
+  if (state.messages.length === 0) {
+    chatBox.appendChild(empty);
+    return;
+  }
+  state.messages.forEach((msg, i) => {
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + msg.role;
+    div.innerHTML = '<div class="sender">' + (msg.role === 'user' ? '나' : '코치') + '</div><div class="text">' + escapeHtml(msg.text) + '</div>';
+    chatBox.appendChild(div);
+  });
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ============================================================
+// 탭 전환
+// ============================================================
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+  document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+// ============================================================
+// 대화 전송
+// ============================================================
+
+function handleSend() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addMessage('user', text);
+
+  // 프로필 누락 체크
+  const missing = getMissingFields();
+  if (missing.length > 0) {
+    setTimeout(() => {
+      addMessage('bot', missing.join('\n'));
+    }, 400);
+    return;
+  }
+
+  // 프로필 완비 → 추천 생성
+  setTimeout(() => {
+    generateRecommendation();
+  }, 400);
+}
+
+function addMessage(role, text) {
+  state.messages.push({ role, text });
+  updateChat();
+}
+
+function getMissingFields() {
+  const p = state.profile;
+  const msgs = [];
+  if (!p.진로) msgs.push('희망 진로나 관심 직무가 무엇인가요? (예: IT/개발, 사무/행정, 디자인 등)');
+  if (!p.학습방식) msgs.push('주로 어떤 방식으로 공부하시나요? (개념 강의형 / 문제풀이형 / 독학형 / 혼합형)');
+  if (!p.비용선호) msgs.push('비용 선호는 어떻게 되시나요? (완전 무료 / 강의 무료·교재 구매 / 유료 강의 허용 / 시간 절약 우선)');
+  if (!p.가용시간) msgs.push('하루 또는 주당 가용 시간이 어떻게 되시나요? (예: 하루 1시간, 주 5시간)');
+  if (!p.목표시기) msgs.push('목표 시기나 목표 회차가 있나요? (예: 6개월 후, 2026년 3회차)');
+  return msgs;
+}
+
+// ============================================================
+// 추천 생성 (P0-1, P0-3)
+// ============================================================
+
+function generateRecommendation() {
+  const p = state.profile;
+  const isIT = p.진로 && p.진로.includes('IT') || p.진로 && p.진로.includes('개발');
+  const isOffice = p.진로 && p.진로.includes('사무');
+  const costAllowsPaid = p.비용선호 === '유료 강의 허용' || p.비용선호 === '시간 절약 우선';
+  const freeOnly = p.비용선호 === '완전 무료';
+
+  const primaryName = isIT ? '정보처리기사' : isOffice ? '컴퓨터활용능력 1급' : 'SQLD';
+  const primaryReason = isIT
+    ? 'IT/개발 직무에 가장 널리 활용되는 국가기술자격. 실무 기본 소양으로 인정되며, 채용공고에서 자주 요구됨.'
+    : isOffice
+    ? '사무·행정 직군에서 엑셀 실무 능력으로 활용. 공공기관·일반기업 사무직 채용 시 우대.'
+    : '데이터베이스·데이터 직무 관심 시 실무 바로 활용 가능한 자격. SQL 활용 역량 증명.';
+
+  const alternatives = isIT
+    ? [
+        { name: 'SQLD', reason: '데이터베이스·데이터 직무 관심 시 실무 바로 활용 가능한 자격.' },
+        { name: '컴퓨터활용능력 1급', reason: '사무·행정 직군에서도 활용 가능, 엑셀 실무 능력 증명.' }
+      ]
+    : [
+        { name: '정보처리기사', reason: 'IT 기본 소양으로 넓은 활용 범위. IT·데이터 직무 전환 시 유리.' },
+        { name: 'GTQ(그래픽기술자격)', reason: '디자인·콘텐츠 직군 관심 시 시각 자료 제작 역량 증명.' }
+      ];
+
+  const usedInfo = [
+    '희망 직무: ' + (p.진로 || '미입력'),
+    '학습 방식: ' + (p.학습방식 || '미입력'),
+    '비용 선호: ' + (p.비용선호 || '미입력'),
+    '가용 시간: ' + (p.가용시간 || '미입력'),
+    '목표 시기: ' + (p.목표시기 || '미입력'),
+  ].filter(s => !s.includes('미입력'));
+
+  const lectreBase = freeOnly
+    ? '무료: 유튜브 강의 + K-MOOC/대학 OCW 무료 강의 (전체 범위 cover 여부 확인 필요)'
+    : costAllowsPaid
+    ? '무료: 유튜브 + K-MOOC 강의 (일부 무료) + 유료 전환 지점 확인 필요'
+    : '무료: 유튜브 강의 + K-MOOC 무료 강의 (전체 cover 확인 필요)';
+
+  const paidLectureField = costAllowsPaid
+    ? '유료 후보: 인프런/패스트캠퍼스 정보처리기사 강의 (가격 변동 확인 필요 — 가격·무료 전환 지점·전체 범위 cover 여부를 반드시 확인, 무료 대안: 유튜브 + 시나공 교재로 독학 가능)'
+    : freeOnly
+    ? '유료 강의는 추천하지 않음. 무료 대안으로 충분히 준비 가능: 유튜브 무료 강의 + 시나공 교재 독학.'
+    : '';
+
+  const response = {
+    type: 'recommendation',
+    recommendation: {
+      primary: {
+        name: primaryName,
+        reason: primaryReason,
+        prepRange: '필기+실기, 하루 1~2시간 기준 약 3~4개월',
+        caution: '응시자격(학력·경력 등) 확인 필요. 연 4회 시행.'
+      },
+      alternatives: alternatives,
+      usedInfo: usedInfo
+    },
+    path: {
+      basic: {
+        lecture: lectreBase,
+        examMaterial: '큐넷(Q-net) 공식 기출문제 및 샘플문제',
+        textbook: isIT ? '1순위: 시나공 정보처리기사 필기/실기 (출판사 공식)' : '1순위: 시나공 컴퓨터활용능력 1급 필기/실기 (출판사 공식)',
+        estimatedCost: freeOnly
+          ? '무료 (강의·교재 모두 무료 대안 존재)'
+          : costAllowsPaid
+          ? '무료~유료 강의 3~5만원 + 교재 3~4만원 (유료 허용 시)'
+          : '무료~교재 3~4만원 (강의 무료 기준)',
+        reason: freeOnly
+          ? '완전 무료 선호 → 무료만으로 완주 가능한 경로 우선'
+          : costAllowsPaid
+          ? '유료 강의 허용 + 시간 절약 우선 → 전체 범위 cover 되는 유료 강의 후보로 보강 가능, 무료 대안도 함께 제시'
+          : '강의 무료 선호 → 무료 강의 기준, 교재는 구매',
+        paidLecture: paidLectureField,
+        caution: costAllowsPaid
+          ? '유료 강의는 가격·무료 전환 지점·전체 범위 cover 여부를 반드시 확인하고, 무료 대안이 있으면 함께 제시'
+          : '무료 자료 중 불법 공유 의심 자료는 추천하지 않음. 합법적인 공식·공공 대안만 사용'
+      }
+    }
+  };
+
+  state.recommendation = response.recommendation;
+  state.path = response.path;
+
+  // 대시보드 표시
+  document.getElementById('dashboardSection').classList.remove('hidden');
+  renderDashboard();
+
+  addMessage('bot', '자격증 추천을 준비했어요. 아래 결과를 확인해주세요.');
+  renderAll();
+}
+
+function renderDashboard() {
+  const rec = state.recommendation;
+  if (!rec) return;
+
+  // 사용한 정보
+  const usedBox = document.getElementById('usedInfoBox');
+  if (rec.usedInfo && rec.usedInfo.length > 0) {
+    usedBox.innerHTML = '<strong>이번 판단에 사용한 정보:</strong> ' + rec.usedInfo.join(' · ');
+    usedBox.style.display = 'block';
+  } else {
+    usedBox.style.display = 'none';
+  }
+
+  // 콘텐츠
+  const content = document.getElementById('recommendationContent');
+  let html = '';
+
+  // 1순위
+  html += '<div class="rec-primary">';
+  html += '<div class="name">🥇 1순위: ' + rec.primary.name + '</div>';
+  html += '<div class="reason">' + rec.primary.reason + '</div>';
+  html += '<div class="meta">준비 예상: ' + rec.primary.prepRange + ' | 주의점: ' + rec.primary.caution + '</div>';
+  html += '</div>';
+
+  // 대안
+  if (rec.alternatives && rec.alternatives.length > 0) {
+    html += '<div style="margin-bottom:12px;"><div style="font-weight:600; font-size:13px; margin-bottom:6px;">🥈 대안 자격증</div>';
+    rec.alternatives.forEach((alt, i) => {
+      html += '<div class="rec-alt"><div class="name">' + alt.name + '</div><div class="reason">' + alt.reason + '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // 학습 경로
+  if (state.path && state.path.basic) {
+    const pb = state.path.basic;
+    html += '<div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">';
+    html += '<div style="font-weight:600; font-size:14px; margin-bottom:8px;">📚 기본 학습 경로</div>';
+    html += '<div class="path-grid">';
+    html += pathItem('강의', pb.lecture);
+    html += pathItem('기출/자료', pb.examMaterial);
+    html += pathItem('교재', pb.textbook);
+    html += pathItem('예상 비용', pb.estimatedCost);
+    html += pathItem('선택 이유', pb.reason);
+    html += '</div>';
+    if (pb.paidLecture) {
+      html += '<div class="paid-lecture"><strong>유료 강의 옵션 (유료 허용 시):</strong> ' + pb.paidLecture + '</div>';
+    }
+    if (pb.caution) {
+      html += '<div class="card-caution" style="margin-top:8px; padding:6px 10px; font-size:12px;"><strong>⚠ 주의:</strong> ' + pb.caution + '</div>';
+    }
+    html += '</div>';
+  }
+
+  content.innerHTML = html;
+}
+
+function pathItem(label, value) {
+  return '<div class="path-item"><span class="label">' + label + '</span>' + escapeHtml(value) + '</div>';
+}
+
+// ============================================================
+// 일정 확인 (P0-2)
+// ============================================================
+
+function showSchedule(certName) {
+  document.getElementById('scheduleCertName').textContent = certName;
+  document.getElementById('scheduleSection').classList.remove('hidden');
+
+  // 모의 일정 데이터 (실제 web_extract 결과는 추후 연결)
+  const scheduleData = {
+    certName: certName,
+    organizer: '큐넷(Q-net) / 한국산업인력공단',
+    접수시작: '2026-08-10',
+    접수마감: '2026-08-20',
+    시험일: '2026-09-15',
+    발표일: '2026-10-15',
+    응시료: '19,000원',
+    응시자격: '학력·경력 요건 충족 (큐넷 응시자격 자가진단 참고)',
+    공식페이지: 'https://www.q-net.or.kr/',
+    확인날짜: new Date().toISOString().slice(0, 10),
+    미발표: [],
+  };
+
+  state.schedule = scheduleData;
+  renderSchedule();
+}
+
+function renderSchedule() {
+  const s = state.schedule;
+  if (!s) return;
+  const grid = document.getElementById('scheduleGrid');
+  const items = [
+    { label: '접수 시작', value: s.접수시작 },
+    { label: '접수 마감', value: s.접수마감 },
+    { label: '시험일', value: s.시험일 },
+    { label: '합격자 발표', value: s.발표일 },
+    { label: '응시료', value: s.응시료 },
+    { label: '응시자격', value: s.응시자격 },
+  ];
+  grid.innerHTML = items.map(it =>
+    '<div class="schedule-item"><span class="label">' + it.label + '</span><span class="value">' + it.value + '</span></div>'
+  ).join('');
+
+  document.getElementById('scheduleSource').textContent = s.공식페이지;
+  document.getElementById('scheduleDate').textContent = s.확인날짜;
+
+  const unconf = document.getElementById('scheduleUnconfirmed');
+  if (s.미발표 && s.미발표.length > 0) {
+    unconf.textContent = '⚠ 미발표 항목: ' + s.미발표.join(', ') + ' (공식 일정 미발표)';
+    unconf.style.display = 'block';
+  } else {
+    unconf.style.display = 'none';
+  }
+}
+
+// ============================================================
+// 학습 계획 (P0-4)
+// ============================================================
+
+function showPlan(certName) {
+  document.getElementById('planCertName').textContent = certName;
+  document.getElementById('planSection').classList.remove('hidden');
+
+  const weeks = 12; // 모의: 12주
+  document.getElementById('planTotalWeeks').textContent = weeks;
+
+  const p = state.profile;
+  const hoursPerDay = p.가용시간 ? parseInt(p.가용시간.replace(/[^0-9]/g, '')) || 1 : 1;
+  const weeklyHours = hoursPerDay * 5; // 주5일 가정
+
+  const plan = generatePlan(certName, weeks, weeklyHours);
+  state.plan = plan;
+  renderPlan();
+}
+
+function generatePlan(certName, weeks, weeklyHours) {
+  const totalHours = weeks * weeklyHours;
+  const phases = [
+    { name: '개념 학습', ratio: 0.40, start: 1, end: Math.ceil(weeks * 0.4), desc: '교재·강의로 개념 정리, 챕터별 요약' },
+    { name: '문제풀이', ratio: 0.25, start: Math.ceil(weeks * 0.4) + 1, end: Math.ceil(weeks * 0.65), desc: '단원별 문제 풀이, 취약 챕터 복습' },
+    { name: '기출 연습', ratio: 0.25, start: Math.ceil(weeks * 0.65) + 1, end: Math.ceil(weeks * 0.9), desc: '최근 5개년 기출 풀이, 시간 관리 연습' },
+    { name: '모의고사·복습', ratio: 0.10, start: Math.ceil(weeks * 0.9) + 1, end: weeks, desc: '모의고사 3회 이상, 틀린 문제 최종 복습' },
+  ];
+
+  const rows = phases.map(ph => {
+    const h = Math.round(totalHours * ph.ratio);
+    return { ...ph, hours: h, startWeek: ph.start, endWeek: ph.end };
+  });
+
+  const todayTasks = [
+    '오늘 공부할 챕터 1개 정하기 (개념 또는 문제풀이)',
+    '어제 틀린 문제 3개 복습',
+    '강의 1~2강 시청 또는 교재 10p 읽기'
+  ];
+
+  const now = new Date();
+  const nextDeadline = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const deadlineStr = nextDeadline.toISOString().slice(0, 10);
+
+  return {
+    certName,
+    weeks,
+    weeklyHours,
+    totalHours,
+    phases: rows,
+    todayTasks,
+    nextDeadline: deadlineStr,
+    adjusted: false,
+    delayAlert: null,
+  };
+}
+
+function renderPlan() {
+  const plan = state.plan;
+  if (!plan) return;
+
+  const table = document.getElementById('planTable');
+  table.innerHTML = '<tr><th>단계</th><th>주차</th><th>비율</th><th>내용</th><th>예상 시간</th></tr>' +
+    plan.phases.map(ph =>
+      '<tr><td><strong>' + ph.name + '</strong></td><td>' + ph.startWeek + '~' + ph.endWeek + '주</td><td>' + Math.round(ph.ratio * 100) + '%</td><td>' + ph.desc + '</td><td>' + ph.hours + '시간</td></tr>'
+    ).join('');
+
+  // 오늘 브리핑
+  const briefing = document.getElementById('planBriefing');
+  briefing.innerHTML = '<strong>📌 오늘 할 일 (할 일 1~3개)</strong><br>' + plan.todayTasks.map(t => '• ' + t).join('<br>') +
+    '<br><br><strong>가장 가까운 마감:</strong> ' + plan.nextDeadline;
+
+  // 지연 재조정 알림 (모의)
+  const adjustAlert = document.getElementById('planAdjustAlert');
+  if (plan.adjusted) {
+    adjustAlert.innerHTML = '<strong>🔔 재조정 알림:</strong> 지연 3일 이상으로 계획을 재조정했습니다. 앞 단계 압축, 뒤 단계 보호 적용.';
+    adjustAlert.style.display = 'block';
+  } else {
+    adjustAlert.style.display = 'none';
+  }
+}
+
+function showNotionConsent() {
+  document.getElementById('notionModal').classList.remove('hidden');
+}
+
+function closeNotionModal() {
+  document.getElementById('notionModal').classList.add('hidden');
+}
+
+function confirmNotion() {
+  const parentUrl = document.getElementById('notionParentInput').value.trim();
+  if (!parentUrl) {
+    alert('부모 페이지 URL 또는 위치를 입력해 주세요.');
+    return;
+  }
+  // 실제 Notion API 호출은 추후 /api 경유
+  // 시뮬레이션: 성공 or 실패(파일 대체)
+  const success = true; // 모의: 성공
+  if (success) {
+    state.notionStatus = '연결됨';
+    state.notionPageUrl = 'https://notion.so/학습공간-예시'; // 모의 URL
+    document.getElementById('notionStatus').textContent = '✅ 학습 공간 생성 완료: ' + state.notionPageUrl;
+    document.getElementById('notionStatus').style.color = '#388e3c';
+  } else {
+    state.notionStatus = '실패-파일대체';
+    const fallbackPath = '/workspace/학습공간_' + state.plan?.certName + '.md';
+    document.getElementById('notionStatus').textContent = '⚠ Notion 생성 실패 — 워크스페이스 파일로 대체: ' + fallbackPath;
+    document.getElementById('notionStatus').style.color = '#f0ad4e';
+  }
+  closeNotionModal();
+}
+
+// ============================================================
+// P1 기능
+// ============================================================
+
+function renderP1() {
+  // 캘린더
+  const calContent = document.getElementById('calendarContent');
+  if (state.schedule) {
+    calContent.innerHTML = `
+      <div style="margin-bottom:10px;">
+        <strong>등록 가능한 일정:</strong><br>
+        <div style="font-size:12px; color:var(--muted);">${state.schedule.접수시작} ~ ${state.schedule.접수마감} 접수 | ${state.schedule.시험일} 시험</div>
+      </div>
+      <button class="btn-small" onclick="handleCalendarRegister()">📅 캘린더에 등록 (동의 필요)</button>
+      <span id="calendarStatus" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
+    `;
+  } else {
+    calContent.innerHTML = '<div style="font-size:13px; color:var(--muted);">아직 일정이 확인되지 않았습니다. 먼저 일정 확인을 진행하세요.</div>';
+  }
+
+  // 프로필 편집
+  document.getElementById('currentProfileDisplay').textContent = JSON.stringify(state.profile, null, 2) || '(프로필 없음)';
+
+  // 결과
+  document.getElementById('resultMessage').textContent = '';
+
+  // 유효기간
+  document.getElementById('validityMessage').textContent = '';
+
+  // 취업 가이드라인
+  document.getElementById('guidelineMessage').textContent = '';
+}
+
+function handleCalendarRegister() {
+  const statusEl = document.getElementById('calendarStatus');
+  if (state.calendarStatus === '미연결') {
+    statusEl.textContent = '⚠ Google Calendar 커넥터가 연결되지 않았습니다. 텍스트 일정과 연결 안내로 대체됩니다.';
+    statusEl.style.color = '#f0ad4e';
+    return;
+  }
+  // 동의 필요 — 실제 구현은 동의 모달 후 등록
+  statusEl.textContent = '✅ 동의 후 등록 완료 (모의)';
+  statusEl.style.color = '#388e3c';
+}
+
+function handleAcquired() {
+  const cert = document.getElementById('acquiredCert').value.trim();
+  if (!cert) return;
+  state.acquiredCerts.push(cert);
+  document.getElementById('acquiredCert').value = '';
+  addMessage('user', '취득 완료: ' + cert);
+  addMessage('bot', '취득을 확인했어요. ' + cert + '을(를) 보유 자격증에 추가하고, 다음 단계를 제안해 드릴게요. (실제 보유 갱신 동의는 프로필 저장 동의 후 진행)');
+  renderP1();
+}
+
+function handleProfileChange() {
+  const input = document.getElementById('profileChangeInput').value.trim();
+  if (!input) return;
+  addMessage('user', '프로필 변경: ' + input);
+  // 모의: 간단히 가용시간 등 파싱
+  const hoursMatch = input.match(/(\d+)시간/);
+  if (hoursMatch) {
+    state.profile.가용시간 = hoursMatch[1] + '시간';
+    saveProfileToStorage(state.profile);
+    addMessage('bot', '가용시간을 ' + state.profile.가용시간 + '으로 변경했어요. 기존 추천·계획을 재계산합니다.');
+    // 기존 추천이 있으면 재계산 시뮬레이션
+    if (state.recommendation) {
+      generateRecommendation();
+    }
+  } else {
+    addMessage('bot', '변경 내용을 반영했어요. (실제 적용: ' + input + ')');
+  }
+  document.getElementById('profileChangeInput').value = '';
+  renderP1();
+}
+
+function handleResult() {
+  const cert = document.getElementById('resultCert').value.trim();
+  const status = document.getElementById('resultStatus').value;
+  const msgEl = document.getElementById('resultMessage');
+  if (!cert || !status) {
+    msgEl.textContent = '자격증명과 결과를 선택해 주세요.';
+    return;
+  }
+  addMessage('user', status + ': ' + cert);
+  if (status === '합격') {
+    state.acquiredCerts.push(cert);
+    msgEl.innerHTML = '✅ <strong>합격</strong>을 확인했어요! ' + cert + '을(를) 보유 자격증에 추가하고, 다음 자격증을 제안해 드릴게요. (모드 E: 다음 자격증 제안)';
+    msgEl.style.color = '#2e7d32';
+    addMessage('bot', '합격을 축하드려요! ' + cert + ' 취득 완료. 다음 단계 자격증을 제안해 드릴게요.');
+  } else {
+    msgEl.innerHTML = '📋 <strong>불합격</strong> 결과를 확인했어요. 다음 회차 공식 일정을 확인하고, 완료율이 가장 낮았던 단계의 비중을 올린 계획을 제안해 드릴게요. (위로보다 다음 계획 먼저)';
+    msgEl.style.color = '#856404';
+    addMessage('bot', '결과를 확인했어요. 다음 회차 일정을 확인하고, 부족했던 단계 비중을 올린 계획을 제안해 드릴게요.');
+  }
+  document.getElementById('resultCert').value = '';
+  document.getElementById('resultStatus').value = '';
+  renderP1();
+}
+
+function handleValidity() {
+  const cert = document.getElementById('validityCert').value.trim();
+  const acquired = document.getElementById('validityAcquired').value.trim();
+  const expiry = document.getElementById('validityExpiry').value.trim();
+  const msgEl = document.getElementById('validityMessage');
+  if (!cert) {
+    msgEl.textContent = '자격증명을 입력해 주세요.';
+    return;
+  }
+  addMessage('user', '유효기간 검토: ' + cert + (acquired ? ' (취득: ' + acquired + ') ' : '') + (expiry ? '(만료: ' + expiry + ') ' : ''));
+  // 모의 검토
+  let result = '';
+  if (expiry) {
+    const expDate = new Date(expiry + '-01');
+    const now = new Date();
+    const monthsLeft = (expDate.getFullYear() - now.getFullYear()) * 12 + (expDate.getMonth() - now.getMonth());
+    if (monthsLeft <= 3) {
+      result = '⚠ <strong>만료 임박:</strong> ' + cert + '의 만료 시점이 ' + expiry + '로, 약 ' + monthsLeft + '개월 남았습니다. 갱신이 필요한지 확인해 주세요. (웹 크롤링으로 공식 만료 시점 재확인 가능)';
+    } else if (monthsLeft <= 6) {
+      result = '📌 <strong>만료 임박 주의:</strong> ' + cert + '의 만료 시점이 ' + expiry + '로, 약 ' + monthsLeft + '개월 남았습니다. 갱신 시점 검토를 권장합니다.';
+    } else {
+      result = '✅ <strong>유효:</strong> ' + cert + '의 만료 시점이 ' + expiry + '로, 약 ' + monthsLeft + '개월 남았습니다. 현재 유효합니다.';
+    }
+  } else {
+    result = '📌 <strong>만료 시점 미확인:</strong> ' + cert + '의 만료 시점을 알려주시면 검토해 드려요. (웹 크롤링으로 공식 만료 시점 확인 가능)';
+  }
+  msgEl.textContent = result;
+  document.getElementById('validityCert').value = '';
+  document.getElementById('validityAcquired').value = '';
+  document.getElementById('validityExpiry').value = '';
+  renderP1();
+}
+
+function handleGuideline() {
+  const job = document.getElementById('guidelineJob').value.trim();
+  const msgEl = document.getElementById('guidelineMessage');
+  if (!job) {
+    msgEl.textContent = '관심 직무나 공고 링크/텍스트를 입력해 주세요.';
+    return;
+  }
+  addMessage('user', '취업 가이드라인 분석: ' + job);
+  // 모의 — 실제 web_extract로 공고 반복 요건 추출 후 표시
+  msgEl.innerHTML = `
+    <strong>📋 취업 가이드라인 (조건부)</strong><br><br>
+    <strong>직무 요약:</strong> ${job} 분야는 실무 역량 중심의 채용이 많으며, 관련 자격증과 포트폴리오로 역량을 증명하는 것이 일반적입니다.<br><br>
+    <strong>필요 역량 묶음 (채용공고 반복 요건 기반):</strong><br>
+    • 관련 도구/소프트웨어 활용 능력<br>
+    • 실무 프로젝트 또는 포트폴리오<br>
+    • 관련 자격증 (직무에 따라)<br>
+    • 협업·커뮤니케이션 능력<br><br>
+    <strong>자격증 연결:</strong> ${job} 직무에서 자주 요구되는 자격증으로는 정보처리기사, SQLD, 컴퓨터활용능력 등이 있습니다. (실제 공고 반복 요건 확인 필요)<br><br>
+    <strong>포트폴리오 방향:</strong> 실무 프로젝트, 재현 분석, 오픈소스 기여 등 실제 산출물로 역량을 보여주는 것이 효과적입니다.<br><br>
+    <strong>참고 공고:</strong> 실제 채용공고를 web_extract로 확인해 반복 요건을 추출해야 합니다. (현재 예시: 공고 확인 전)
+  `;
+  document.getElementById('guidelineJob').value = '';
+  renderP1();
+}
+
+// ============================================================
+// 모달
+// ============================================================
+
+function showResetConfirm() {
+  document.getElementById('resetModal').classList.remove('hidden');
+}
+
+function closeResetModal() {
+  document.getElementById('resetModal').classList.add('hidden');
+}
+
+function confirmReset() {
+  clearProfile();
+  addMessage('bot', '프로필과 진행 내역이 초기화되었어요.');
+  closeResetModal();
+}
+
+function closeConsent() {
+  document.getElementById('consentModal').classList.add('hidden');
+}
+
+function saveProfileConsent() {
+  state.profile.저장동의 = true;
+  saveProfileToStorage(state.profile);
+  document.getElementById('consentModal').classList.add('hidden');
+  addMessage('bot', '프로필이 저장되었어요. 이제 더 맞춤화된 추천을 받을 수 있습니다.');
+}
+
+// ============================================================
+// 키보드 이벤트
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('chatInput');
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  });
+
+  // 초기 상태
+  if (state.profile.저장동의) {
+    addMessage('bot', '저장된 프로필을 찾았어요. 필요하면 수정할 수 있어요.');
+  }
+
+  // P1 탭 초기 렌더링
+  renderP1();
+  updateProfileBadge();
+
+  // 프로필 저장 안 되어 있으면 추천 불가 메시지
+  const missing = getMissingFields();
+  if (missing.length > 0 && state.messages.length === 0) {
+    // 첫 방문 안내 메시지와 함께
+  }
+});
+
+// 첫 방문 안내 — 대화 없이 대시보드만 표시되진 않음
+</script>
+</body>
+</html>

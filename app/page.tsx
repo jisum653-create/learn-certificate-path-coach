@@ -237,6 +237,7 @@ export default function Home() {
   const [shownConsent, setShownConsent] = useState(false)
   const [calendarConsentAsked, setCalendarConsentAsked] = useState(false)
   const [calendarConsent, setCalendarConsent] = useState<boolean | null>(null)
+  const [calendarRegistered, setCalendarRegistered] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   // 첫 방문 안내 + 저장된 프로필 안내
@@ -328,6 +329,33 @@ export default function Home() {
     saveProfile(profile, true)
     setShownConsent(false)
     setMessages(prev => [...prev, { role: 'bot', text: '프로필 저장에 동의해 주셔서 고마워요. 이제 추천 결과를 더 정확하게 맞춤화할 수 있어요.', meta: 'saved' }])
+  }
+
+  // P1-1 캘린더 등록 (동의 후 실제 Google Calendar API 호출)
+  const handleCalendarRegister = async () => {
+    if (!schedule) return
+    setLoading(true)
+    try {
+      const res = await postJson('/api/calendar-register', {
+        qualification: schedule.qualification,
+        examDate: schedule.items.find((it) => it.label === '시험일정' || it.label === '시험일')?.value || '',
+        consent: true,
+      })
+      if (res.status === 'registered') {
+        setMessages(prev => [...prev, { role: 'bot', text: res.message || '캘린더에 일정이 등록됐어요.', meta: 'done' }])
+        setCalendarRegistered(true)
+      } else if (res.status === 'unavailable' || res.status === 'token_expired') {
+        setMessages(prev => [...prev, { role: 'bot', text: res.message || '캘린더 연결이 안 되어 있어 텍스트 일정과 연결 안내로 대체해요.', meta: 'reply' }])
+        setCalendarRegistered(false)
+      } else {
+        setMessages(prev => [...prev, { role: 'bot', text: res.message || '캘린더 등록 상태를 확인했어요.', meta: 'done' }])
+      }
+    } catch {
+      setMessages(prev => [...prev, { role: 'bot', text: '캘린더 등록 중 오류가 발생했어요. 다시 시도해 주세요.', meta: 'error' }])
+      setCalendarRegistered(false)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const 헤더프로필 = profile.저장동의
@@ -848,7 +876,10 @@ export default function Home() {
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
-                          onClick={() => setCalendarConsent(true)}
+                          onClick={() => {
+                            setCalendarConsent(true)
+                            handleCalendarRegister()
+                          }}
                           style={{
                             padding: '7px 14px',
                             background: SP.green,
@@ -865,7 +896,10 @@ export default function Home() {
                           등록 동의
                         </button>
                         <button
-                          onClick={() => setCalendarConsent(false)}
+                          onClick={() => {
+                            setCalendarConsent(false)
+                            setCalendarRegistered(false)
+                          }}
                           style={{
                             padding: '7px 14px',
                             background: 'transparent',
@@ -883,9 +917,14 @@ export default function Home() {
                           등록 안 함
                         </button>
                       </div>
-                      {calendarConsent === true && (
+                      {calendarConsent === true && calendarRegistered === true && (
                         <div style={{ marginTop: '6px', color: SP.green, fontSize: '12px', fontWeight: '600' }}>
-                          ✓ 동의했어요. (실제 등록은 /api/calendar-preview에서 커넥터 상태에 따라 진행 — 미연결 시 텍스트 일정+연결 안내로 대체)
+                          ✓ 동의했어요. 캘린더에 일정이 등록됐어요. (Google Calendar 실제 등록 완료)
+                        </div>
+                      )}
+                      {calendarConsent === true && calendarRegistered === false && (
+                        <div style={{ marginTop: '6px', color: SP.warning, fontSize: '12px', fontWeight: '600' }}>
+                          동의했지만 캘린더 연결이 아직 안 됐어요. 캘린더 연결하기를 먼저 진행해 주세요.
                         </div>
                       )}
                       {calendarConsent === false && (

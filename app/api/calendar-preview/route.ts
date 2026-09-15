@@ -8,7 +8,10 @@ export async function POST(req: NextRequest) {
   const qualification = (body.qualification ?? body.자격증명 ?? '정보처리기사').toString().trim()
   const examDate = body.examDate ?? '2026년 하반기 (공식 일정 확인 필요)'
   const consent = body.consent ?? false
-  const connectorReady = false // 실제 서비스: 환경변수로 커넥터 연결 상태 확인 (PRD: Vercel 환경변수)
+
+  // v2: Google OAuth 연결 상태 확인 (httpOnly 쿠키 기반)
+  const tokenCookie = req.cookies.get('google_calendar_token')?.value
+  const connectorReady = tokenCookie !== undefined && tokenCookie !== ''
 
   const preview = [{ title: `[${qualification}] 시험일`, date: examDate, note: '공식 확정 일정만 등록 대상' }]
 

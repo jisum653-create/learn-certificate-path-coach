@@ -157,7 +157,78 @@ export const QUALIFICATION_DETAIL_URLS: Record<string, { detail: string; schedul
   'TOEIC': { detail: 'https://exam.toeic.co.kr/common/template/viewContents.php?contentsCode=19', schedule: 'https://exam.toeic.co.kr/receipt/examSchList.php', examInfo: 'https://exam.toeic.co.kr/common/template/viewContents.php?contentsCode=36' },
   // 정보처리기사
   '정보처리기사': { detail: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s01&jmCd=1320&jmInfoDivCcd=B0', schedule: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s02&jmCd=1320&jmInfoDivCcd=B0', eligibility: 'https://www.q-net.or.kr/crf006.do?id=crf00603&gSite=Q', fee: 'https://www.q-net.or.kr/rcv001.do?id=rcv00103&gSite=Q' },
+  // 정보처리산업기사/기능사, 정보보안기사/산업기사 — q-net crf005 패턴 (정보처리기사와 동일 구조, jmCd만 다름)
+  '정보처리산업기사': { detail: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s01&jmCd=1321&jmInfoDivCcd=B0', schedule: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s02&jmCd=1321&jmInfoDivCcd=B0' },
+  '정보처리기능사': { detail: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s01&jmCd=1322&jmInfoDivCcd=B0', schedule: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s02&jmCd=1322&jmInfoDivCcd=B0' },
+  '정보보안기사': { detail: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s01&jmCd=1324&jmInfoDivCcd=B0', schedule: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s02&jmCd=1324&jmInfoDivCcd=B0' },
+  '정보보안산업기사': { detail: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s01&jmCd=1325&jmInfoDivCcd=B0', schedule: 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s02&jmCd=1325&jmInfoDivCcd=B0' },
   // 컴퓨터활용능력
   '컴퓨터활용능력 1급': { detail: 'https://license.korcham.net/co/examguide.do?mm=21&cd=0103', schedule: 'https://license.korcham.net/co/examguide03.do?cd=0103&mm=21', examInfo: 'https://license.korcham.net/co/examguide04.do?cd=0103&mm=21' },
   '컴퓨터활용능력 2급': { detail: 'https://license.korcham.net/co/examguide.do?mm=21&cd=0103', schedule: 'https://license.korcham.net/co/examguide03.do?cd=0103&mm=21', examInfo: 'https://license.korcham.net/co/examguide04.do?cd=0103&mm=21' },
+
+  // === b조원 확장: 25종 ===
+  // kpc.or.kr 계열 — ITQ/ERP/GTQ/GTQi/GTQid 자격소개 + 시험일정 (공식 페이지 확인됨)
+  'ITQ 정보기술자격': {
+    detail: 'https://license.kpc.or.kr/nasec/qlfint/qlfint/selectItqinfotchnlgyqc.do?pageKind=announcement',
+    schedule: 'https://license.kpc.or.kr/nasec/qlfint/qlfint/selectItqinfotchnlgyqc.do?pageKind=testSchedule',
+  },
+  'ERP정보관리사': {
+    detail: 'https://license.kpc.or.kr/nasec/qlfint/qlfint/selectErpinfomg.do?pageKind=announcement',
+    schedule: 'https://license.kpc.or.kr/nasec/qlfint/qlfint/selectErpinfomg.do?pageKind=testSchedule',
+  },
+  'GTQ 그래픽기술자격': {
+    detail: 'https://license.kpc.or.kr/nasec/qlfint/qlfint/selectGtqinfomg.do?pageKind=announcement_gtq',
+    schedule: 'https://license.kpc.or.kr/nasec/qlfint/qlfint/selectGtqinfomg.do?pageKind=testSchedule',
+  },
+  'GTQi 그래픽기술자격 일러스트': {
+    detail: 'https://license.kpc.or.kr/nasec/qlfint/qlfint/selectGtqinfomg.do?pageKind=announcement_gtqi',
+  },
+  'GTQid 그래픽기술자격 인디자인': {
+    detail: 'https://license.kpc.or.kr/nasec/qlfint/qlfint/selectGtqinfomg.do?pageKind=announcement_gtqid',
+  },
+  // 금융투자협회(kofia.or.kr) 계열 — selLicenseCd 기반 종목별 상세 + 연간 일정
+  '투자자산운용사': {
+    detail: 'https://license.kofia.or.kr/examInfo/examInfo.do?selLicenseCd=FWM006',
+    schedule: 'https://license.kofia.or.kr/examInfo/examYearly.do',
+  },
+  '금융투자분석사': {
+    detail: 'https://license.kofia.or.kr/examInfo/examInfo.do?selLicenseCd=FWR005',
+    schedule: 'https://license.kofia.or.kr/examInfo/examYearly.do',
+  },
+  '재무위험관리사': {
+    detail: 'https://license.kofia.or.kr/examInfo/examInfo.do?selLicenseCd=FWD003',
+    schedule: 'https://license.kofia.or.kr/examInfo/examYearly.do',
+  },
+  // 네트워크관리사 — icqa.or.kr 공식 안내 + pqi.or.kr 기본정보
+  '네트워크관리사 1급': {
+    detail: 'https://exam.icqa.or.kr/cn/page/network',
+    examInfo: 'https://www.pqi.or.kr/inf/qul/infQulBasDetail.do?qulId=351',
+  },
+  '네트워크관리사 2급': {
+    detail: 'https://exam.icqa.or.kr/cn/page/network',
+    examInfo: 'https://www.pqi.or.kr/inf/qul/infQulBasDetail.do?qulId=351',
+  },
+  // 리눅스마스터 — kait.or.kr 자격소개 + ihd.or.kr 시험일정
+  '리눅스마스터 1급': {
+    detail: 'https://kait.or.kr/user/MainMenuList.do?cateSeq=5&menuSeq=119',
+    schedule: 'https://www.ihd.or.kr/guidecert1.do',
+  },
+  '리눅스마스터 2급': {
+    detail: 'https://kait.or.kr/user/MainMenuList.do?cateSeq=5&menuSeq=119',
+    schedule: 'https://www.ihd.or.kr/guidecert1.do',
+  },
+  // === 아래 항목은 공식 상세 URL 미확인 — QUALIFICATION_URLS 대표 URL을 detail로 기입, 추후 확인 필요 ===
+  // 워드프로세서 — 대한상공회의소 examguide cd=0102, mm=21 패턴 (컴활 cd=0103과 동일 구조, 상세 URL 미확인)
+  '워드프로세서': { detail: 'https://license.korcham.net/co/examguide.do?mm=21&cd=0102' },
+  // 전산회계운용사/유통관리사/무역영어 — korcham.net examguide cd 미확인, 대표 URL 사용
+  '전산회계운용사': { detail: 'https://license.korcham.net/' },
+  '유통관리사': { detail: 'https://license.korcham.net/' },
+  '무역영어': { detail: 'https://license.korcham.net/' },
+  // 신용분석사 — kbi.or.kr 상세 URL 미확인, 대표 URL 사용
+  '신용분석사': { detail: 'https://www.kbi.or.kr/platformWeb/Common.do?cmd=goIndex' },
+  // 전산회계 1급/2급, 전산세무 1급/2급 — kacta.or.kr 상세 URL 미확인, 대표 URL 사용
+  '전산회계 1급': { detail: 'https://license.kacta.or.kr/' },
+  '전산회계 2급': { detail: 'https://license.kacta.or.kr/' },
+  '전산세무 1급': { detail: 'https://license.kacta.or.kr/' },
+  '전산세무 2급': { detail: 'https://license.kacta.or.kr/' },
 };

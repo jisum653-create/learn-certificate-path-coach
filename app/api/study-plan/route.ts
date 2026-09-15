@@ -16,17 +16,14 @@ interface PlanWeek {
 }
 
 function calcTotalWeeks(examDateRaw: string): number {
-  // "2026년 하반기" 등 넓은 표현은 기본 12주
   const match = examDateRaw.match(/(\d{4})년\s*(\d{1,2})월/) ?? examDateRaw.match(/(\d{4})년/)
   if (!match) return 12
   const year = Number(match[1])
   const month = match[2] ? Number(match[2]) : 12
-  // 대략적인 시험월까지 주 수 계산 (오늘 기준)
-  const examDate = new Date(year, month - 1, 15) // 월 중순 기준
+  const examDate = new Date(year, month - 1, 15)
   const now = new Date()
   const diffDays = Math.max(0, (examDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  const weeks = Math.max(4, Math.ceil(diffDays / 7))
-  return weeks
+  return Math.max(4, Math.ceil(diffDays / 7))
 }
 
 function buildPlan({
@@ -60,7 +57,6 @@ function buildPlan({
     hours,
     done: false,
   }))
-
   return {
     qualification,
     examDate,
@@ -77,17 +73,14 @@ export async function POST(req: NextRequest) {
   const qualification = (body.qualification as string | undefined) ?? '정보처리기사'
   const examDate = (body.examDate as string | undefined) ?? '2026년 하반기'
   const consent = body.consent === true
-
   const notionToken = (body.notionToken as string | undefined) ?? ''
   const notionParentPageId = (body.notionParentPageId as string | undefined) ?? ''
 
   const totalWeeks = calcTotalWeeks(examDate)
   const plan = buildPlan({ qualification, examDate, totalWeeks, profile })
 
-  // Notion 연동: 동의 + 토큰 존재 시 실제 Notion API 호출
   if (consent && notionToken) {
     try {
-      // Notion API 호출 — 부모 페이지에 "[자격증명] 학습 공간" 페이지 생성
       const notionPageUrl = await createNotionStudySpace({
         token: notionToken,
         parentPageId: notionParentPageId,
@@ -95,7 +88,6 @@ export async function POST(req: NextRequest) {
         examDate,
         plan,
       })
-
       return NextResponse.json({
         type: 'study-plan',
         plan,
@@ -105,7 +97,6 @@ export async function POST(req: NextRequest) {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Notion 연동 실패'
       console.error('[Notion] 학습 공간 생성 오류:', message)
-
       return NextResponse.json({
         type: 'study-plan',
         plan,
@@ -117,7 +108,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 동의 없거나 토큰 없음 → Stub 상태 유지 (텍스트 기반 계획 + 안내)
   return NextResponse.json({
     type: 'study-plan',
     plan,
@@ -125,10 +115,6 @@ export async function POST(req: NextRequest) {
   })
 }
 
-// Notion API 호출 — 부모 페이지에 학습 공간 페이지 생성
-// Notion REST API: https://api.notion.com/v1/pages
-// 인증: Bearer <통합 토큰>
-// 부모 페이지 ID로 페이지 생성, 제목은 "[자격증명] 학습 공간", 시험일·주차별 계획 속성 포함
 async function createNotionStudySpace({
   token,
   parentPageId,
@@ -146,19 +132,9 @@ async function createNotionStudySpace({
     throw new Error('Notion 부모 페이지 ID가 없어요. Notion에서 학습 공간을 만들 부모 페이지 주소를 확인해 주세요.')
   }
 
-  // Notion 페이지 생성 API 호출
   const notionUrl = 'https://api.notion.com/v1/pages'
   const title = `[${qualification}] 학습 공간`
   const examDateStr = plan.examDate
-
-  // 주차별 계획 내용을 Notion 페이지 본문에 마크다운 형식으로 구성
-  const weeksText = plan.weeks
-    .map(
-      (w) =>
-        `**${w.week}주차** — ${w.focus} (${w.hours})\n` +
-        ` - 완료 여부: ${w.done ? '완료' : '미완료'}\n`
-    )
-    .join('\n')
 
   const properties: Record<string, unknown> = {
     제목: { title: [{ text: { content: title } }] },
@@ -167,7 +143,6 @@ async function createNotionStudySpace({
     총주차: { number: plan.totalWeeks },
   }
 
-  // 픽업 텍스트 블록 구성 (Notion 페이지 본문)
   const children: Record<string, unknown>[] = [
     {
       object: 'block',
@@ -178,9 +153,7 @@ async function createNotionStudySpace({
       object: 'block',
       type: 'paragraph',
       paragraph: {
-        text: [
-          { type: 'text', text: { content: `시험일: ${examDateStr} · 총 ${plan.totalWeeks}주 · 상태: ${plan.status}` } },
-        ],
+        text: [{ type: 'text', text: { content: `시험일: ${examDateStr} · 총 ${plan.totalWeeks}주 · 상태: ${plan.status}` } }],
       },
     },
     {
@@ -192,9 +165,7 @@ async function createNotionStudySpace({
       object: 'block',
       type: 'paragraph',
       paragraph: {
-        text: [
-          { type: 'text', text: { content: `할 일: ${plan.briefing.task}\n가장 가까운 마감: ${plan.briefing.deadline}` } },
-        ],
+        text: [{ type: 'text', text: { content: `할 일: ${plan.briefing.task}\n가장 가까운 마감: ${plan.briefing.deadline}` } }],
       },
     },
     {
@@ -206,14 +177,7 @@ async function createNotionStudySpace({
       object: 'block',
       type: 'paragraph',
       paragraph: {
-        text: [
-          {
-            type: 'text',
-            text: {
-              content: `${w.week}주차 — ${w.focus} (${w.hours}) · 완료: ${w.done ? '완료' : '미완료'}`,
-            },
-          },
-        ],
+        text: [{ type: 'text', text: { content: `${w.week}주차 — ${w.focus} (${w.hours}) · 완료: ${w.done ? '완료' : '미완료'}` } }],
       },
     })),
   ]
@@ -225,11 +189,7 @@ async function createNotionStudySpace({
       Authorization: `Bearer ${token}`,
       'Notion-Version': '2022-06-28',
     },
-    body: JSON.stringify({
-      parent: { page_id: parentPageId },
-      properties,
-      children,
-    }),
+    body: JSON.stringify({ parent: { page_id: parentPageId }, properties, children }),
   })
 
   if (!response.ok) {
@@ -246,6 +206,5 @@ async function createNotionStudySpace({
   const data = (await response.json()) as { id?: string; url?: string }
   const pageId = data.id ?? ''
   const pageUrl = data.url ?? `https://www.notion.so/${pageId}`
-
   return pageUrl
 }

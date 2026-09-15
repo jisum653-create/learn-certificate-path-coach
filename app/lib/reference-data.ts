@@ -59,42 +59,51 @@ export const EXTERNAL_REFERENCE_SITES = [
 
 // === 공고 반복요건 패턴 (채용공고 사이트 분석 기반, 추후 실제 공고로 대체 예정) ===
 // 각 직무별로 자주 요구되는 기술 스택, 선호 자격증, 추천 공고 사이트 정리
-export const JOB_REQUIREMENT_PATTERNS: Record<string, { role: string; skills: string[]; preferredCerts: string[]; jobSites: string[] }> = {
+// 주의: preferredCerts는 "특정 공고에서 확인되거나 업무 관련성이 있는 자격" 목록이며,
+//       여러 공고에서 반복 요구된다고 단정하는 근거가 아님. 실제 공고로 대체 전까지는
+//       각 목록이 '확인된 근거'인지 '관련성/추정'인지 notes로 구분해서 사용.
+export const JOB_REQUIREMENT_PATTERNS: Record<string, { role: string; skills: string[]; preferredCerts: string[]; jobSites: string[]; notes: string }> = {
   '백엔드 개발': {
     role: '백엔드 개발자',
     skills: ['Java', 'Spring', 'Python', 'Node.js', 'MySQL', 'Redis'],
     preferredCerts: ['정보처리기사', 'SQLD (SQL 개발자)'],
     jobSites: ['점핏', '로켓펀치', '그룹바이'],
+    notes: '정보처리기사: 한국기술교육대 2026 전산직 응시자격(정보처리기사/정보보안기사 중 1개 이상, https://job.career.co.kr/recruit/view/21942438, 2026-09-16 추출), 사람인 정보보안·네트워크 엔지니어 공고(정보보안기사·리눅스마스터2급·네트워크관련 자격증 우대, https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=54617383, 2026-09-16 추출)에서 언급·우대 확인. SQLD: DB/SQL 업무와 연관되어 검토 대상이나 직접 우대 확인된 개별 공고는 미확보. 여러 공고에서 반복 요구된다고 단정하려면 추가 공고 확인 필요.',
   },
   '프론트엔드 개발': {
     role: '프론트엔드 개발자',
     skills: ['JavaScript', 'React', 'Vue.js', 'HTML/CSS'],
-    preferredCerts: ['정보처리기능사', '컴퓨터활용능력 2급'],
+    preferredCerts: [],
     jobSites: ['점핏', '로켓펀치', '서핏'],
+    notes: '현재 확보한 공고에서 프론트엔드 직무가 특정 자격증을 요구/우대하는 사례 미확인. 실제 공고 확보 시 업데이트.',
   },
   '데이터 분석': {
     role: '데이터 분석가',
     skills: ['Python', 'SQL', 'pandas', 'Tableau', '통계'],
-    preferredCerts: ['SQLD (SQL 개발자)', 'ADsP (데이터분석 준전문가)', 'ADP (데이터분석 전문가)', '빅데이터분석기사'],
+    preferredCerts: ['ADP (데이터분석 전문가)', 'SQLD (SQL 개발자)', 'ADsP (데이터분석 준전문가)', '빅데이터분석기사'],
     jobSites: ['서핏', '점핏', '로켓펀치'],
+    notes: 'ADP: 현대해상 2026 대졸 신입 채용 "디지털/데이터분석" 직무에서 "ADP자격 보유자" 우대 확인(https://imc.sejong.ac.kr/bbs_shop/read.htm?board_code=recruit&cate_sub_idx=0&idx=1152784, 2026-09-16 추출). SQLD·ADsP·빅데이터분석기사는 데이터 분석/PM 업무에서 검토 대상 자격으로 언급됨(외부 참고 자료 기준). SQLD는 링커리어 커뮤니티에서 한전 2025 상반기 공채 가산점 사례로 언급되나(https://community.linkareer.com/employment_data/6215290, 2026-09-16 추출) 실제 공고 직접 확인은 아님. ADsP·빅데이터분석기사는 합격자소서 보유 언급만 있고 직접 우대 확인된 개별 공고는 미확보. 반복 요건 단정 아님 — 공고별로 확인 필요.',
   },
   'IT 보안': {
     role: '정보보안 담당',
     skills: ['네트워크', '보안 솔루션', '취약점 진단', 'Linux'],
-    preferredCerts: ['정보보안기사', '리눅스마스터 1급', '네트워크관리사 1급'],
+    preferredCerts: ['정보보안기사'],
     jobSites: ['점핏', '로켓펀치'],
+    notes: '정보보안기사: 현대해상 2026 대졸 신입 "IT/정보보호" 직무에서 "정보보안기사 자격 보유자" 우대 확인(https://imc.sejong.ac.kr/bbs_shop/read.htm?board_code=recruit&cate_sub_idx=0&idx=1152784, 2026-09-16 추출), 한국기술교육대 2026 전산직 응시자격(https://job.career.co.kr/recruit/view/21942438, 2026-09-16 추출), 사람인 정보보안·네트워크 엔지니어 공고(https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=54617383, 2026-09-16 추출)에서 직접 우대/응시자격 확인. 리눅스마스터 1급은 보안 직무와 관련성이 높으나 직접 우대 확인된 개별 공고는 미확보 — 현 목록에서는 제외. 네트워크관리사는 "네트워크 관련 자격증 우대" 표현만 확인되고 특정 자격증 직접 언급은 미확인이라 제외. 실제 공고 확보 시 업데이트.',
   },
   '사무/경영지원': {
     role: '사무·경영지원',
     skills: ['Excel', 'Word', 'PowerPoint', 'ERP'],
-    preferredCerts: ['컴퓨터활용능력 1급', '워드프로세서', 'ERP정보관리사', '전산회계 1급'],
+    preferredCerts: ['컴퓨터활용능력 1급', 'ERP정보관리사'],
     jobSites: ['캐치', '리멤버'],
+    notes: '워드프로세서·전산회계 1급은 상세 URL 미확인으로 자격증 리스트에서 삭제되어 선호 자격증에서도 제거. 컴퓨터활용능력 1급은 사무 업무에서 널리 활용되나 현재 사무/경영지원 공고에서 직접 우대 확인된 개별 공고는 미확보(네이터 뉴스 기사 https://m.news.nate.com/view/20260303n32808는 오피스 활용 중요성 일반론, 2026-09-16 추출). ERP정보관리사는 ERP 업무와 연관되나 실제 공고 확인 필요. 반복 요건 단정 아님.',
   },
   '디자인': {
     role: '그래픽/웹 디자이너',
     skills: ['Photoshop', 'Illustrator', 'Figma', 'UI/UX'],
     preferredCerts: ['GTQ 그래픽기술자격', 'GTQi 그래픽기술자격 일러스트'],
     jobSites: ['코공고', '서핏'],
+    notes: 'GTQ·GTQi: 대구예술인지원센터 웹디자이너 채용 공고(https://www.artistcenter.or.kr/pg/bbs/board.php?bo_table=news04&wr_id=670, 2026-09-16 추출)에서 "GTQi(그래픽기술자격일러스트) 1급, GTQ(그래픽기술자격)1급" 직접 우대 확인. 단 1건 공고 기준이며 여러 공고에서 반복 요구된다고 단정하려면 추가 공고 확인 필요. 패키지 디자이너 공고의 "컴퓨터활용능력 우수자" 우대는 GTQ·GTQi와 무관.',
   },
 };
 
@@ -116,27 +125,18 @@ export const QUALIFICATION_URLS: Record<string, string> = {
   '정보보안산업기사': 'https://www.q-net.or.kr/crf005.do?gSite=Q&id=crf00503s01&jmCd=1325&jmInfoDivCcd=B0',
   '컴퓨터활용능력 1급': 'https://license.korcham.net/co/examguide.do?mm=21&cd=0103',
   '컴퓨터활용능력 2급': 'https://license.korcham.net/co/examguide.do?mm=21&cd=0103',
-  '워드프로세서': 'https://license.korcham.net/co/examguide.do?mm=21&cd=0102',
   'ITQ 정보기술자격': 'https://license.kpc.or.kr/',
   '네트워크관리사 1급': 'https://www.icqa.or.kr/',
   '네트워크관리사 2급': 'https://www.icqa.or.kr/',
   '리눅스마스터 1급': 'https://www.ihq.or.kr/',
   '리눅스마스터 2급': 'https://www.ihq.or.kr/',
   'ERP정보관리사': 'https://license.kpc.or.kr/',
-  '전산회계운용사': 'https://license.korcham.net/',
-  '유통관리사': 'https://license.korcham.net/',
-  '무역영어': 'https://license.korcham.net/',
   'GTQ 그래픽기술자격': 'https://license.kpc.or.kr/',
   'GTQi 그래픽기술자격 일러스트': 'https://license.kpc.or.kr/',
   'GTQid 그래픽기술자격 인디자인': 'https://license.kpc.or.kr/',
   '투자자산운용사': 'https://license.kofia.or.kr/examInfo/examYearly.do',
   '금융투자분석사': 'https://license.kofia.or.kr/examInfo/examYearly.do',
   '재무위험관리사': 'https://license.kofia.or.kr/examInfo/examYearly.do',
-  '신용분석사': 'https://www.kbi.or.kr/platformWeb/Common.do?cmd=goIndex',
-  '전산회계 1급': 'https://license.kacta.or.kr/',
-  '전산회계 2급': 'https://license.kacta.or.kr/',
-  '전산세무 1급': 'https://license.kacta.or.kr/',
-  '전산세무 2급': 'https://license.kacta.or.kr/',
 };
 
 // === 자격증별 공식 상세 URL (official-certificate-source-links.md 기반) ===
@@ -217,18 +217,5 @@ export const QUALIFICATION_DETAIL_URLS: Record<string, { detail: string; schedul
     detail: 'https://kait.or.kr/user/MainMenuList.do?cateSeq=5&menuSeq=119',
     schedule: 'https://www.ihd.or.kr/guidecert1.do',
   },
-  // === 아래 항목은 공식 상세 URL 미확인 — QUALIFICATION_URLS 대표 URL을 detail로 기입, 추후 확인 필요 ===
-  // 워드프로세서 — 대한상공회의소 examguide cd=0102, mm=21 패턴 (컴활 cd=0103과 동일 구조, 상세 URL 미확인)
-  '워드프로세서': { detail: 'https://license.korcham.net/co/examguide.do?mm=21&cd=0102' },
-  // 전산회계운용사/유통관리사/무역영어 — korcham.net examguide cd 미확인, 대표 URL 사용
-  '전산회계운용사': { detail: 'https://license.korcham.net/' },
-  '유통관리사': { detail: 'https://license.korcham.net/' },
-  '무역영어': { detail: 'https://license.korcham.net/' },
-  // 신용분석사 — kbi.or.kr 상세 URL 미확인, 대표 URL 사용
-  '신용분석사': { detail: 'https://www.kbi.or.kr/platformWeb/Common.do?cmd=goIndex' },
-  // 전산회계 1급/2급, 전산세무 1급/2급 — kacta.or.kr 상세 URL 미확인, 대표 URL 사용
-  '전산회계 1급': { detail: 'https://license.kacta.or.kr/' },
-  '전산회계 2급': { detail: 'https://license.kacta.or.kr/' },
-  '전산세무 1급': { detail: 'https://license.kacta.or.kr/' },
-  '전산세무 2급': { detail: 'https://license.kacta.or.kr/' },
+
 };

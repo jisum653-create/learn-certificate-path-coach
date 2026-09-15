@@ -1,12 +1,16 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   webpack: (config) => {
-    // googleapis 모듈 미설치 상태에서 해당 import를 사용하는 route가
-    // 빌드를 막는 것을 방지 — 실제 사용은 런타임 조건부
-    config.resolve.ignore = config.resolve.ignore || []
-    config.resolve.ignore.push(/googleapis/)
-    return config
+    // googleapis 미설치 상태에서 Google Calendar/Notion 연동 route 빌드 통과용 stub 매핑
+    // (해당 기능은 다른 팀원 담당 — 현재는 빌드만 막고 있음)
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'googleapis': path.resolve(__dirname, 'app/lib/googleapis-stub.js'),
+    };
+    return config;
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

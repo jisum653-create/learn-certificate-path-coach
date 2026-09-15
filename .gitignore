@@ -50,3 +50,8 @@ reference-data-certificates.xlsx
 dataset-summary.json
 extract_runtime_test.js
 fix_auth.py
+mcp-search-server/
+.venv-mcp/
+test_*.js
+test_*.py
+/docs/

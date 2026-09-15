@@ -2,6 +2,43 @@ import { NextRequest, NextResponse } from 'next/server'
 import { recommend, Profile, RecommendationCandidate } from '../../lib/recommend'
 import { getQualificationSchedule, ScheduleItem } from '../../lib/qualification-extract'
 import { QUALIFICATION_DETAIL_URLS } from '../../lib/reference-data'
+import { webResearch, buildResearchContext } from '../../lib/service-search'
+
+/**
+ * 프로필·메시지 기반으로 웹 리서치 검색 쿼리 생성
+ * - 진로/관심공고 기반: 직무+자격증 관련 검색
+ * - 보유자격증 기반: 연계/다음 단계 검색
+ * - 메시지에서 특정 자격증 언급 시: 해당 자격증 정보 검색
+ */
+function buildWebResearchQuery(profile: Profile, message: string): string | null {
+  const parts: string[] = []
+
+  // 진로 기반 검색
+  if (profile.진로) {
+    parts.push(`${profile.진로} 자격증 추천 2026`)
+  }
+
+  // 관심 공고 기반 검색
+  if (profile.관심공고) {
+    parts.push(`${profile.관심공고} 채용 자격증 우대 2026`)
+  }
+
+  // 보유 자격증 기반 연계 검색
+  if (profile.보유자격증 && profile.보유자격증.length > 0) {
+    const lastCert = profile.보유자격증[profile.보유자격증.length - 1]
+    parts.push(`${lastCert} 다음 단계 자격증 ${profile.진로 || '취업'}`)
+  }
+
+  // 메시지에서 특정 자격증 언급 시 해당 자격증 검색
+  if (message) {
+    const certMatch = message.match(/(정보처리기사|정보처리산업기사|정보처리기능사|정보보안기사|정보보안산업기사|SQLD|ADsP|ADP|빅데이터분석기사|컴퓨터활용능력|GTQ|리눅스마스터|네트워크관리사|ERP정보관리사|투자자산운용사|금융투자분석사|재무위험관리사|TOEIC|한국사능력검정시험|ITQ|무역영어|유통관리사|전산회계|전산세무)/)
+    if (certMatch) {
+      parts.push(`${certMatch[1]} 자격증 정보 시험일정 2026`)
+    }
+  }
+
+  return parts.length > 0 ? parts[0] : null
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
@@ -18,7 +55,30 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // 2. 프로필 기반 추천 후보 필터링 + 순위 매김
+  // 2. 웹 리서치 — 네이버 뉴스 검색 + Jina Reader URL 방문
+  let researchOutput = null
+  let researchContext = ''
+  try {
+    const query = buildWebResearchQuery(profile, message)
+    // 추천 후보 중 상위 3개의 공식 URL 목록 (웹 리서치 방문 대상)
+    const candidates = recommend(profile, message)
+    const officialUrls = candidates.slice(0, 3).map(c => c.url).filter(Boolean)
+    if (query || officialUrls.length > 0) {
+      researchOutput = await webResearch(query || '자격증 추천', 3, officialUrls.length > 0 ? officialUrls : undefined)
+      researchContext = buildResearchContext(researchOutput)
+    }
+  } catch (e) {
+    console.warn('[recommend] 웹 리서치 중 오류:', e)
+    researchOutput = {
+      query: '',
+      search: { query: '', extractedUrls: [], rawText: '', extractedAt: new Date().toISOString(), source: 'jina', error: String(e) },
+      pages: [],
+      extractedAt: new Date().toISOString(),
+    }
+    researchContext = `⚠ 웹 리서치 중 오류 발생: ${e}`
+  }
+
+  // 3. 프로필 기반 추천 후보 필터링 + 순위 매김
   const candidates = recommend(profile, message)
 
   if (candidates.length === 0) {
@@ -87,10 +147,16 @@ export async function POST(req: NextRequest) {
         `공식 URL 참조표: ${detailInfo?.detail || '참조표 미등록'}`,
         examConfirmed ? 'web_extract(Jina Reader/cheerio)로 공식 원문 확인 완료' : '공식 일정 미발표 — web_extract로 재확인 필요',
         detailInfo ? `공식 상세 페이지: ${detailInfo.detail}` : '',
+        researchOutput && researchOutput.search?.error
+          ? `⚠ 웹 리서치 경고: ${researchOutput.search.error}`
+          : researchOutput
+            ? `웹 리서치 수행: ${researchOutput.query} (출처: ${researchOutput.search?.source || '없음'}, 추출 페이지: ${researchOutput.pages?.length || 0})`
+            : '웹 리서치 미수행 (검색 쿼리 없음)',
       ].filter(Boolean),
+      researchContext: researchContext || undefined,
     },
     message: profile.진로
-      ? `${primary.자격증명}을(를) 1순위로 추천해요. ${primary.reasons.slice(0,2).join('. ')}. 공식 URL: ${detailInfo?.detail || '참조표 확인 필요'}`
+      ? `${primary.자격증명}을(를) 1순위로 추천해요. ${primary.reasons.slice(0,2).join('. ')}. 공식 URL: ${detailInfo?.detail || '참조표 확인 필요'}${researchContext ? '\n\n[웹 리서치]' + researchContext : ''}`
       : '프로필 정보를 알려주시면 조건에 맞는 1순위+대안 자격증을 추천해요.',
   })
 }

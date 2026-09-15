@@ -48,3 +48,5 @@ next-env.d.ts
 recovered-pages/
 reference-data-certificates.xlsx
 dataset-summary.json
+extract_runtime_test.js
+fix_auth.py

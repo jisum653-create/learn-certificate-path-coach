@@ -83,6 +83,7 @@ const 유료가이드라인 =
 
 // ---------- localStorage helpers ----------
 function loadProfile(): Profile {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return {}
   try {
     const raw = localStorage.getItem('certCoachProfile')
     if (!raw) return {}
@@ -111,6 +112,7 @@ async function postJson(path: string, body: Record<string, unknown>) {
 
 // ---------- 메시지 로컬 저장 ----------
 function loadMessages(): Message[] {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return []
   try {
     const raw = localStorage.getItem('certCoachMessages')
     if (!raw) return []
@@ -238,6 +240,9 @@ export default function Home() {
   const [calendarConsentAsked, setCalendarConsentAsked] = useState(false)
   const [calendarConsent, setCalendarConsent] = useState<boolean | null>(null)
   const [calendarRegistered, setCalendarRegistered] = useState(false)
+  const [notionToken, setNotionToken] = useState<string>(() => (typeof localStorage !== 'undefined' ? localStorage.getItem('certCoachNotionToken') || '' : ''))
+  const [notionParentPageId, setNotionParentPageId] = useState<string>(() => (typeof localStorage !== 'undefined' ? localStorage.getItem('certCoachNotionParentPageId') || '' : ''))
+  const [notionResult, setNotionResult] = useState<{ type: 'success' | 'error' | 'fallback'; url?: string; message: string } | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   // 첫 방문 안내 + 저장된 프로필 안내
@@ -353,6 +358,46 @@ export default function Home() {
     } catch {
       setMessages(prev => [...prev, { role: 'bot', text: '캘린더 등록 중 오류가 발생했어요. 다시 시도해 주세요.', meta: 'error' }])
       setCalendarRegistered(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // P1-7 Notion 학습 공간 연동 (사용자 토큰 기반)
+  const handleNotionConnect = async () => {
+    if (!plan) {
+      setNotionResult({ type: 'error', message: '먼저 대화에서 학습 계획이 만들어져야 해요.' })
+      return
+    }
+    if (!notionToken || !notionParentPageId) {
+      setNotionResult({ type: 'error', message: 'Notion 통합 토큰과 부모 페이지 ID를 모두 입력해 주세요.' })
+      return
+    }
+    setLoading(true)
+    try {
+      const res = await postJson('/api/study-plan', {
+        profile,
+        qualification: plan.qualification,
+        examDate: plan.examDate,
+        consent: true,
+        notionToken,
+        notionParentPageId,
+      })
+      if (res.notionPageUrl) {
+        localStorage.setItem('certCoachNotionToken', notionToken)
+        localStorage.setItem('certCoachNotionParentPageId', notionParentPageId)
+        setNotionResult({ type: 'success', url: res.notionPageUrl, message: res.message || 'Notion 학습 공간이 만들어졌어요.' })
+        setMessages(prev => [...prev, { role: 'bot', text: res.message || 'Notion 학습 공간이 만들어졌어요.', meta: 'done' }])
+      } else if (res.대체) {
+        setNotionResult({ type: 'fallback', message: res.대체.text || 'Notion 연동은 실패했지만 워크스페이스 파일로 대체할게요.' })
+        setMessages(prev => [...prev, { role: 'bot', text: res.대체.text || 'Notion 연동 실패, 텍스트 계획으로 안내드릴게요.', meta: 'reply' }])
+      } else {
+        setNotionResult({ type: 'error', message: res.message || 'Notion 연동 중 오류가 발생했어요.' })
+        setMessages(prev => [...prev, { role: 'bot', text: res.message || '오류가 발생했어요.', meta: 'error' }])
+      }
+    } catch (e) {
+      setNotionResult({ type: 'error', message: 'Notion 연동 중 네트워크 오류가 발생했어요.' })
+      setMessages(prev => [...prev, { role: 'bot', text: 'Notion 연동 중 오류가 발생했어요. 다시 시도해 주세요.', meta: 'error' }])
     } finally {
       setLoading(false)
     }

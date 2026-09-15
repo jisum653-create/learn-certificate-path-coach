@@ -1,33 +1,96 @@
-
 import { NextRequest, NextResponse } from 'next/server'
-
-// P0-1: 사용자 조건 기반 1순위+대안 추천
-// P0-3: 개인화 학습 경로 (유료 강의 가이드라인 포함)
-// P1-6: 취업 가이드라인 (조건부 — 관심 공고·목표 직무 있을 때만)
+import { recommend, Profile, RecommendationCandidate } from '../../lib/recommend'
+import { getQualificationSchedule, ScheduleItem } from '../../lib/qualification-extract'
+import { QUALIFICATION_DETAIL_URLS } from '../../lib/reference-data'
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const profile = body.profile as Record<string, unknown> | undefined
-  const message = (body.message as string | undefined) ?? ''
+  const profile = body.profile as Profile | undefined
+  const message = (body.message as string) || ''
+
+  // 1. 프로필 없으면 추천 불가
+  if (!profile) {
+    return NextResponse.json({
+      type: 'recommend',
+      result: null,
+      message: '프로필 정보를 알려주시면 조건에 맞는 1순위+대안 자격증을 추천해요.',
+      usedInfo: ['프로필 미설정 — 추천 후보 없음'],
+    })
+  }
+
+  // 2. 프로필 기반 추천 후보 필터링 + 순위 매김
+  const candidates = recommend(profile, message)
+
+  if (candidates.length === 0) {
+    return NextResponse.json({
+      type: 'recommend',
+      result: null,
+      message: '프로필 조건으로는 추천할 자격증이 없어요. 진로·관심공고·가용시간 등을 더 알려주시면 다시 추천할게요.',
+      usedInfo: ['프로필 조건 불일치 — 추천 후보 없음'],
+    })
+  }
+
+  // 3. 1순위 + 대안
+  const primaryCandidate = candidates[0]
+  const primary: RecommendationCandidate = {
+    ...primaryCandidate,
+  }
+  const alternatives = candidates.slice(1, 4).map(c => ({
+    name: c.자격증명,
+    reason: c.reasons.slice(0, 2).join('. ') + '.',
+  }))
+
+  // 3. 공식 정보 검증 (schedule 데이터 병합)
+  let scheduleItems: ScheduleItem[] = []
+  let examConfirmed = false
+  try {
+    scheduleItems = await getQualificationSchedule(primary.자격증명)
+    examConfirmed = scheduleItems.some(item => item.confirmed)
+  } catch (e) {
+    console.error('[recommend] 일정 추출 오류:', e)
+  }
+
+  // 4. 학습 경로 (현재는 기본 텍스트 반환 — 추후 확장)
+  const learningPath = {
+    primary: primary.자격증명,
+    note: primary.reasons.slice(0, 3).join(' / '),
+  }
+
+  // 5. 취업 가이드라인 (관심 공고/목표 직무 있을 때만)
+  const jobGuideline = (profile.관심공고 || profile.진로)
+    ? {
+        qualification: primary.자격증명,
+        note: `관심 공고·진로 기반 추천: ${primary.자격증명}`,
+      }
+    : null
+
+  // 6. 공식 URL 정보
+  const detailInfo = QUALIFICATION_DETAIL_URLS[primary.자격증명]
 
   return NextResponse.json({
     type: 'recommend',
     result: {
-      primary: { name: '정보처리기사', reason: '프로필 기반 1순위 후보 (실제 연동 시 web_extract로 검증)', prepRange: '하루 1~2시간 기준 약 3~4개월', caution: '실제 추천은 프로필 기반 재계산 필요' },
-      alternatives: [{ name: 'SQLD', reason: '데이터·DB 실무 연결 대안 (실제 연동 시 추천 로직 기반)' }],
-      path: {
-        basic: {
-          lecture: '무료 강의 후보 (실제 연동 시 강의 검증 블록 산출)',
-          examMaterial: '공식 기출·자료 (실제 연동 시 web_extract로 확인)',
-          textbook: '기본 교재 1권 (실제 연동 시 교재 검증 블록 산출)',
-          estimatedCost: '응시료 + 교재 비용 (실제 연동 시 총비용 산출)',
-          paidLecture: '유료 허용 시 유료 후보 포함 (실제 연동 시 유료 가이드라인 적용)',
-          caution: '유료 강의는 가격·무료 전환 지점·전체 범위 cover 여부 표시, 무료 대안 함께 제시',
-        },
+      primary: {
+        name: primary.자격증명,
+        reason: primary.reasons.slice(0, 2).join('. ') + '.',
+        caution: primary.caution,
+        detailUrl: detailInfo?.detail || undefined,
+        scheduleUrl: detailInfo?.schedule || undefined,
+        examConfirmed,
+        scheduleItems: scheduleItems.length > 0 ? scheduleItems : undefined,
       },
-      usedInfo: ['프로필: 진로, 보유자격증, 학습방식, 비용선호, 가용시간, 목표시기'],
+      alternatives,
+      path: learningPath,
+      jobGuideline,
+      usedInfo: [
+        `프로필: 진로(${profile.진로 || '미설정'}), 보유자격증(${(profile.보유자격증 || []).join(', ') || '없음'}), 학습방식(${profile.학습방식 || '미설정'}), 비용선호(${profile.비용선호 || '미설정'}), 가용시간(${profile.가용시간 || '미설정'}), 목표시기(${profile.목표시기 || '미설정'})`,
+        `공식 URL 참조표: ${detailInfo?.detail || '참조표 미등록'}`,
+        examConfirmed ? 'web_extract(Jina Reader/cheerio)로 공식 원문 확인 완료' : '공식 일정 미발표 — web_extract로 재확인 필요',
+        detailInfo ? `공식 상세 페이지: ${detailInfo.detail}` : '',
+      ].filter(Boolean),
     },
-    message: profile ? '프로필을 바탕으로 1순위 자격증과 대안을 추천했어요. (실제 연동 시 web_extract로 공식 정보 검증 포함)' : '프로필 정보를 알려주시면 조건에 맞는 1순위+대안 자격증을 추천해요.',
+    message: profile.진로
+      ? `${primary.자격증명}을(를) 1순위로 추천해요. ${primary.reasons.slice(0,2).join('. ')}. 공식 URL: ${detailInfo?.detail || '참조표 확인 필요'}`
+      : '프로필 정보를 알려주시면 조건에 맞는 1순위+대안 자격증을 추천해요.',
   })
 }
-

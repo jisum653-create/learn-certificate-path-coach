@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className={inter.variable} style={{ margin: 0, padding: 0, background: '#f5f5f5', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <body className={inter.variable} style={{ margin: 0, padding: 0, background: '#121212', color: '#ffffff', fontFamily: 'SpotifyMixUI, CircularSp-Arab, CircularSp-Hebr, CircularSp-Cyrl, CircularSp-Grek, CircularSp-Deva, Helvetica Neue, helvetica, arial, Hiragino Sans, Hiragino Kaku Gothic ProN, Meiryo, Malgun Gothic, "Apple SD Gothic Neo", sans-serif' }}>
         {children}
       </body>
     </html>

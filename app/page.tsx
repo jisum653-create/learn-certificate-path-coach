@@ -54,7 +54,28 @@ interface PlanData {
   status: '준비중' | '접수완료' | '응시완료' | '합격' | '불합격'
 }
 
-// ---------- PRD 근거 상수 ----------
+// ---------- 스포티파이 컬러 상수 ----------
+const SP = {
+  bg: '#121212',
+  surface: '#181818',
+  surfaceAlt: '#1f1f1f',  // 버튼 배경
+  card: '#252525',
+  cardAlt: '#272727',
+  green: '#1ed760',
+  greenBorder: '#1db954',
+  white: '#ffffff',
+  silver: '#b3b3b3',
+  nearWhite: '#cbcbcb',
+  light: '#fdfdfd',
+  negative: '#f3727f',
+  warning: '#ffa42b',
+  announcement: '#539df5',
+  border: '#4d4d4d',
+  lightBorder: '#7c7c7c',
+  separator: '#b3b3b3',
+  insetBorder: 'rgb(18,18,18) 0px 1px 0px, rgb(124,124,124) 0px 0px 0px 1px inset',
+}
+
 const 유료가이드라인 =
   '유료 강의 추천 시 이유 없이 유료부터 제시하지 않고, 사용자가 유료 허용 시 유료 후보를 포함하며, ' +
   '유료 강의는 가격·무료 전환 지점·전체 범위 cover 여부를 반드시 표시하고 사용자 조건과 연결해 설명하되, ' +
@@ -100,6 +121,109 @@ function saveMessages(msgs: Message[]) {
   localStorage.setItem('certCoachMessages', JSON.stringify(msgs))
 }
 
+// ---------- 메시지 메타 배지 텍스트 ----------
+function metaLabel(meta?: string): string {
+  if (!meta || meta === 'first-visit') return ''
+  switch (meta) {
+    case 'question': return '📌 질문'
+    case 'done': return '✅ 완료'
+    case 'saved': return '💾 저장됨'
+    case 'error': return '⚠️ 오류'
+    case 'reset': return '🔄 초기화'
+    case 'next': return '🔜 다음'
+    default: return '💬'
+  }
+}
+
+// ---------- 메시지 버블 렌더 ----------
+function MessageBubble({ msg }: { msg: Message }) {
+  const isUser = msg.role === 'user'
+  return (
+    <div style={{
+      maxWidth: isUser ? '78%' : '88%',
+      alignSelf: isUser ? 'flex-end' : 'flex-start',
+      background: isUser ? SP.surfaceAlt : SP.card,
+      borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+      padding: '10px 14px',
+      fontSize: '14px',
+      lineHeight: 1.5,
+      color: SP.white,
+      wordBreak: 'break-word',
+      boxShadow: 'rgba(0,0,0,0.3) 0px 4px 8px',
+    }}>
+      {metaLabel(msg.meta) && (
+        <div style={{ fontSize: '10px', color: SP.silver, marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          {metaLabel(msg.meta)}
+        </div>
+      )}
+      {msg.text}
+    </div>
+  )
+}
+
+// ---------- 탭 버튼 ----------
+function TabButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: active ? SP.green : 'transparent',
+        color: active ? '#000000' : SP.silver,
+        border: 'none',
+        padding: '8px 16px',
+        borderRadius: '9999px',
+        cursor: 'pointer',
+        fontSize: '12px',
+        fontWeight: active ? '700' : '400',
+        textTransform: 'uppercase',
+        letterSpacing: '1.4px',
+        fontFamily: 'inherit',
+      }}
+    >
+      {label}
+    </button>
+  )
+}
+
+// ---------- 카드 공통 ----------
+function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={{
+      background: SP.surface,
+      borderRadius: '8px',
+      padding: '14px',
+      boxShadow: 'rgba(0,0,0,0.3) 0px 8px 8px',
+      ...style,
+    }}>
+      {children}
+    </div>
+  )
+}
+
+// ---------- 표 ----------
+function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', color: SP.white }}>
+      <thead>
+        <tr style={{ background: SP.surfaceAlt }}>
+          {headers.map(h => (
+            <th key={h} style={{ textAlign: 'left', padding: '6px 8px', color: SP.silver }}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, i) => (
+          <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : SP.surfaceAlt }}>
+            {row.map((cell, j) => (
+              <td key={j} style={{ padding: '5px 8px', borderTop: '1px solid', borderColor: SP.border }}>{cell}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
 // ---------- MAIN PAGE ----------
 export default function Home() {
   const [tab, setTab] = useState<TabId>('chat')
@@ -135,7 +259,7 @@ export default function Home() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [messages])
 
-  // 메시지 localStorage 동기화 (불필요한 저장 방지: 로딩/빌드시 제외)
+  // 메시지 localStorage 동기화
   useEffect(() => {
     if (messages.length > 0) saveMessages(messages)
   }, [messages])
@@ -210,18 +334,27 @@ export default function Home() {
     ? '저장됨 (수정 가능)'
     : (Object.keys(profile).length > 0 ? '저장 전 — 동의하면 저장돼요' : '미설정')
 
+  const tabs = [
+    ['chat', '💬 대화'], ['dashboard', '📊 추천'], ['schedule', '📅 일정'],
+    ['plan', '📋 계획'], ['profile', '👤 프로필'], ['p1', '🔧 추가 기능']
+  ] as const
+
   return (
-    <div style={{ maxWidth: '880px', margin: '0 auto', padding: '16px 16px 40px' }}>
+    <div style={{ maxWidth: '960px', margin: '0 auto', padding: '20px 20px 60px' }}>
       {/* HEADER */}
-      <header style={{ borderBottom: '1px solid #e2e2e2', paddingBottom: '12px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <header style={{ borderBottom: '1px solid', borderColor: SP.border, paddingBottom: '14px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <div>
-          <h1 style={{ fontSize: '22px', margin: '0 0 4px 0' }}>자격증 패스 코치</h1>
-          <div style={{ color: '#555', fontSize: '13px', margin: 0 }}>
+          <h1 style={{ fontSize: '24px', margin: '0 0 6px 0', fontWeight: '700', color: SP.white, letterSpacing: '-0.3px' }}>
+            자격증 패스 코치
+          </h1>
+          <div style={{ color: SP.silver, fontSize: '12px', margin: 0, fontWeight: '400' }}>
             처음 자격증 준비를 시작하는 분을 위한 대화형 코치 · {유료가이드라인}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '12px', color: '#555' }}>프로필: {헤더프로필}</span>
+          <span style={{ fontSize: '11px', color: SP.silver, textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>
+            프로필: {헤더프로필}
+          </span>
           <button
             onClick={() => {
               clearProfile()
@@ -233,7 +366,18 @@ export default function Home() {
               setMessages([])
               setMessages(prev => [...prev, { role: 'bot', text: '프로필과 대화 기록이 초기화되었어요. 처음부터 다시 시작할 수 있어요.', meta: 'reset' }])
             }}
-            style={{ fontSize: '12px', padding: '4px 8px', border: '1px solid #c00', color: '#c00', background: 'transparent', borderRadius: '6px', cursor: 'pointer' }}
+            style={{
+              fontSize: '11px',
+              padding: '6px 12px',
+              border: '1px solid ' + SP.negative,
+              color: SP.negative,
+              background: 'transparent',
+              borderRadius: '9999px',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              fontWeight: '600',
+            }}
           >
             프로필·대화 초기화
           </button>
@@ -241,114 +385,157 @@ export default function Home() {
       </header>
 
       {/* MAIN GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '16px' }}>
         {/* CHAT */}
-        <section style={{ border: '1px solid #e2e2e2', borderRadius: '10px', background: '#fff', minHeight: '420px', display: 'flex', flexDirection: 'column' }}>
-          {/* 봇 프로필 */}
-          <div style={{ borderBottom: '1px solid #e2e2e2', padding: '10px 12px', background: '#fafafa', display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg,#1976d2,#42a5f5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 'bold', flexShrink: 0 }}>
+        <section style={{
+          background: SP.surface,
+          borderRadius: '8px',
+          boxShadow: 'rgba(0,0,0,0.3) 0px 8px 8px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}>
+          {/* 봇 프로필 헤더 */}
+          <div style={{ borderBottom: '1px solid', borderColor: SP.border, padding: '12px 14px', background: SP.bg, display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{
+              width: '40px', height: '40px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #1ed760, #1db954)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#000000', fontSize: '16px', fontWeight: '700',
+              flexShrink: 0,
+            }}>
               코
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: '600', fontSize: '13px' }}>자격증 패스 코치</div>
-              <div style={{ fontSize: '11px', color: '#777' }}>자격증 추천 · 공식 일정 · 학습 경로 · 진도 관리</div>
+              <div style={{ fontWeight: '700', fontSize: '14px', color: SP.white }}>자격증 패스 코치</div>
+              <div style={{ fontSize: '12px', color: SP.silver, fontWeight: '400' }}>자격증 추천 · 공식 일정 · 학습 경로 · 진도 관리</div>
             </div>
-            <div style={{ fontSize: '11px', color: '#555' }}>온라인</div>
+            <div style={{ fontSize: '11px', color: SP.green, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              온라인
+            </div>
           </div>
 
-          {/* 대화 */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '280px' }}>
+          {/* 대화 영역 */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '320px' }}>
             {messages.length === 0 && (
-              <div style={{ color: '#999', textAlign: 'center', fontSize: '13px', paddingTop: '40px' }}>
-                대화로 시작하세요.<br></br>예: &quot;IT 분야 자격증 추천해줘&quot;, &quot;정보처리기사 일정 알려줘&quot;
+              <div style={{ color: SP.silver, textAlign: 'center', fontSize: '14px', paddingTop: '50px', lineHeight: 1.6 }}>
+                대화로 시작하세요.
+                <br />
+                <span style={{ color: SP.lightBorder, fontSize: '13px' }}>예: &quot;IT 분야 자격증 추천해줘&quot;, &quot;정보처리기사 일정 알려줘&quot;</span>
               </div>
             )}
             {messages.map((msg, idx) => (
-              <div key={idx} style={{
-                maxWidth: msg.role === 'user' ? '78%' : '88%',
-                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                background: msg.role === 'user' ? '#e3f2fd' : '#f5f5f5',
-                borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                padding: '8px 12px',
-                fontSize: '13px',
-                lineHeight: 1.5,
-                wordBreak: 'break-word',
-              }}>
-                {msg.meta && msg.meta !== 'first-visit' && (
-                  <div style={{ fontSize: '10px', color: '#888', marginBottom: '3px', fontWeight: '600' }}>
-                    {msg.meta === 'question' ? '📌 질문' : msg.meta === 'done' ? '✅ 완료' : msg.meta === 'saved' ? '💾 저장됨' : msg.meta === 'error' ? '⚠️ 오류' : msg.meta === 'reset' ? '🔄 초기화' : msg.meta === 'next' ? '🔜 다음' : '💬'}
-                  </div>
-                )}
-                {msg.text}
-              </div>
+              <MessageBubble key={idx} msg={msg} />
             ))}
             {loading && (
-              <div style={{ alignSelf: 'flex-start', background: '#f0f0f0', borderRadius: '14px 14px 14px 4px', padding: '10px 12px', color: '#777', fontSize: '13px' }}>
+              <div style={{
+                alignSelf: 'flex-start',
+                background: SP.surfaceAlt,
+                borderRadius: '14px 14px 14px 4px',
+                padding: '11px 14px',
+                color: SP.silver,
+                fontSize: '14px',
+                boxShadow: 'rgba(0,0,0,0.3) 0px 4px 8px',
+              }}>
                 코치 답변 중…
               </div>
             )}
             <div ref={chatEndRef} />
           </div>
 
-          {/* 입력 */}
-          <div style={{ borderTop: '1px solid #e2e2e2', padding: '10px', display: 'flex', gap: '8px' }}>
+          {/* 입력 영역 */}
+          <div style={{ borderTop: '1px solid', borderColor: SP.border, padding: '12px', display: 'flex', gap: '10px', background: SP.bg }}>
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="대화를 입력하세요 (Enter: 전송, Shift+Enter: 줄바꿈)"
-              style={{ flex: 1, padding: '9px 12px', border: '1px solid #ddd', borderRadius: '20px', fontSize: '13px', outline: 'none' }}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                background: SP.surfaceAlt,
+                color: SP.white,
+                border: '1px solid',
+                borderColor: SP.lightBorder,
+                borderRadius: '9999px',
+                fontSize: '14px',
+                outline: 'none',
+                boxShadow: SP.insetBorder,
+              }}
             />
             <button
               disabled={loading}
               onClick={() => sendMessage()}
-              style={{ padding: '9px 16px', borderRadius: '20px', background: loading ? '#ccc' : '#1976d2', color: '#fff', border: 'none', cursor: loading ? 'default' : 'pointer', fontSize: '13px' }}
+              style={{
+                padding: '10px 20px',
+                borderRadius: '9999px',
+                background: loading ? SP.surfaceAlt : SP.green,
+                color: loading ? SP.silver : '#000000',
+                border: 'none',
+                cursor: loading ? 'default' : 'pointer',
+                fontSize: '13px',
+                fontWeight: '700',
+                textTransform: 'uppercase',
+                letterSpacing: '1.4px',
+              }}
             >
               전송
             </button>
           </div>
         </section>
 
-        {/* DASHBOARD (항상 표시) */}
-        <aside style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* DASHBOARD */}
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* 추천 대시보드 */}
-          <section style={{ border: '1px solid #e2e2e2', borderRadius: '10px', background: '#fff', padding: '12px' }}>
-            <h2 style={{ fontSize: '14px', margin: '0 0 8px 0' }}>추천 결과</h2>
+          <Card>
+            <h2 style={{ fontSize: '16px', margin: '0 0 10px 0', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '1px' }}>
+              추천 결과
+            </h2>
             {rec ? (
               <>
                 {rec.usedInfo.length > 0 && (
-                  <div style={{ fontSize: '11px', color: '#777', background: '#f5f5f5', padding: '6px 8px', borderRadius: '6px', marginBottom: '8px' }}>
-                    <strong>사용한 정보:</strong> {rec.usedInfo.join(', ')}
+                  <div style={{ fontSize: '11px', color: SP.silver, background: SP.surfaceAlt, padding: '8px 10px', borderRadius: '6px', marginBottom: '10px', border: '1px solid', borderColor: SP.border }}>
+                    <strong style={{ color: SP.light }}>사용한 정보:</strong> {rec.usedInfo.join(', ')}
                   </div>
                 )}
-                <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>🥇 1순위: {rec.primary.name}</div>
-                <div style={{ fontSize: '12px', color: '#555', marginBottom: '8px' }}>{rec.primary.reason}</div>
-                <div style={{ fontSize: '11px', color: '#777', marginBottom: '10px' }}>준비 예상: {rec.primary.prepRange}<br></br>주의점: {rec.primary.caution}</div>
+                <div style={{ fontSize: '15px', fontWeight: '700', marginBottom: '4px', color: SP.green }}>
+                  🥇 1순위: {rec.primary.name}
+                </div>
+                <div style={{ fontSize: '13px', color: SP.nearWhite, marginBottom: '10px', lineHeight: 1.6 }}>{rec.primary.reason}</div>
+                <div style={{ fontSize: '12px', color: SP.silver, marginBottom: '12px', lineHeight: 1.6 }}>
+                  <strong>준비 예상:</strong> {rec.primary.prepRange}
+                  <br />
+                  <strong>주의점:</strong> {rec.primary.caution}
+                </div>
                 {rec.alternatives.length > 0 && (
-                  <div style={{ marginBottom: '10px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}>🥈 대안 자격증</div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: SP.silver, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      🥈 대안 자격증
+                    </div>
                     {rec.alternatives.map((a, i) => (
-                      <div key={i} style={{ fontSize: '12px', padding: '6px 8px', background: '#fafafa', borderRadius: '6px', marginBottom: '4px' }}>
-                        {a.name} — {a.reason}
+                      <div key={i} style={{ fontSize: '13px', padding: '8px 10px', background: SP.surfaceAlt, borderRadius: '6px', marginBottom: '5px', color: SP.white, border: '1px solid', borderColor: SP.border }}>
+                        <strong style={{ color: SP.light }}>{a.name}</strong> — {a.reason}
                       </div>
                     ))}
                   </div>
                 )}
                 {rec.path?.basic && (
-                  <div style={{ borderTop: '1px dashed #ddd', paddingTop: '8px', marginTop: '6px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}>기본 학습 경로</div>
-                    <div style={{ fontSize: '11px', lineHeight: 1.6 }}>
-                      <div><strong>강의:</strong> {rec.path.basic.lecture}</div>
-                      <div><strong>기출·자료:</strong> {rec.path.basic.examMaterial}</div>
-                      <div><strong>교재:</strong> {rec.path.basic.textbook}</div>
-                      <div><strong>예상 비용:</strong> {rec.path.basic.estimatedCost}</div>
+                  <div style={{ borderTop: '1px dashed', borderColor: SP.border, paddingTop: '10px', marginTop: '8px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      기본 학습 경로
+                    </div>
+                    <div style={{ fontSize: '12px', lineHeight: 1.7, color: SP.nearWhite }}>
+                      <div style={{ marginBottom: '3px' }}><strong>강의:</strong> {rec.path.basic.lecture}</div>
+                      <div style={{ marginBottom: '3px' }}><strong>기출·자료:</strong> {rec.path.basic.examMaterial}</div>
+                      <div style={{ marginBottom: '3px' }}><strong>교재:</strong> {rec.path.basic.textbook}</div>
+                      <div style={{ marginBottom: '6px' }}><strong>예상 비용:</strong> {rec.path.basic.estimatedCost}</div>
                       {rec.path.basic.paidLecture && (
-                        <div style={{ marginTop: '4px', padding: '6px 8px', background: '#fff8e1', borderRadius: '6px' }}>
+                        <div style={{ marginTop: '5px', padding: '8px 10px', background: SP.warning, borderRadius: '6px', color: '#121212', fontWeight: '600', fontSize: '12px' }}>
                           <strong>유료 강의 옵션:</strong> {rec.path.basic.paidLecture}
                         </div>
                       )}
                       {rec.path.basic.caution && (
-                        <div style={{ color: '#c00', marginTop: '4px', fontSize: '11px' }}>
+                        <div style={{ marginTop: '4px', color: SP.negative, fontWeight: '600', fontSize: '12px' }}>
                           <strong>주의:</strong> {rec.path.basic.caution}
                         </div>
                       )}
@@ -356,8 +543,10 @@ export default function Home() {
                   </div>
                 )}
                 {rec.guideline && (
-                  <div style={{ marginTop: '10px', padding: '8px 10px', background: '#e8f4fd', borderRadius: '8px', fontSize: '12px' }}>
-                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>📋 취업 가이드라인 (조건부)</div>
+                  <div style={{ marginTop: '12px', padding: '10px 12px', background: SP.announcement, borderRadius: '6px', fontSize: '12px', color: '#121212', lineHeight: 1.6, fontWeight: '500' }}>
+                    <div style={{ fontWeight: '700', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '11px' }}>
+                      📋 취업 가이드라인 (조건부)
+                    </div>
                     <div><strong>직무 요약:</strong> {rec.guideline.jobSummary}</div>
                     <div><strong>필요 역량 묶음:</strong> {rec.guideline.requiredSkills}</div>
                     <div><strong>자격증 연결:</strong> {rec.guideline.certConnection}</div>
@@ -367,135 +556,121 @@ export default function Home() {
                 )}
               </>
             ) : (
-              <div style={{ fontSize: '12px', color: '#777' }}>
-                대화 중에 자격증 추천을 요청하면 여기에 1순위 + 대안 + 학습 경로가 표시돼요.<br></br>
-                <span style={{ color: '#aaa', fontSize: '11px' }}>추천 전에는 이 공간이 비어 있어요.</span>
+              <div style={{ fontSize: '13px', color: SP.silver, lineHeight: 1.6 }}>
+                대화 중에 자격증 추천을 요청하면 여기에 1순위 + 대안 + 학습 경로가 표시돼요.
+                <br />
+                <span style={{ color: SP.lightBorder, fontSize: '11px', display: 'block', marginTop: '4px' }}>추천 전에는 이 공간이 비어 있어요.</span>
               </div>
             )}
-          </section>
+          </Card>
 
           {/* 일정 카드 */}
           {schedule && (
-            <section style={{ border: '1px solid #e2e2e2', borderRadius: '10px', background: '#fff', padding: '12px' }}>
-              <h2 style={{ fontSize: '14px', margin: '0 0 8px 0' }}>공식 시험 정보 — {schedule.qualification}</h2>
+            <Card style={{ padding: '12px' }}>
+              <h2 style={{ fontSize: '14px', margin: '0 0 8px 0', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                공식 시험 정보 — {schedule.qualification}
+              </h2>
               {schedule.items.map((it, i) => (
-                <div key={i} style={{ fontSize: '12px', padding: '6px 8px', background: '#fafafa', borderRadius: '6px', marginBottom: '4px' }}>
-                  <strong>{it.label}:</strong> {it.value}
-                  {it.source && <div style={{ color: '#888', fontSize: '10px', marginTop: '2px' }}>출처: {it.source}</div>}
-                  {it.note && <div style={{ color: '#c00', fontSize: '10px' }}>{it.note}</div>}
+                <div key={i} style={{ fontSize: '12px', padding: '7px 9px', background: SP.surfaceAlt, borderRadius: '6px', marginBottom: '5px', color: SP.white, border: '1px solid', borderColor: SP.border }}>
+                  <strong style={{ color: SP.light }}>{it.label}:</strong> {it.value}
+                  {it.source && <div style={{ color: SP.silver, fontSize: '10px', marginTop: '2px' }}>출처: {it.source}</div>}
+                  {it.note && <div style={{ color: SP.negative, fontSize: '10px', marginTop: '2px', fontWeight: '600' }}>{it.note}</div>}
                 </div>
               ))}
-            </section>
+            </Card>
           )}
 
           {/* 계획 카드 */}
           {plan && (
-            <section style={{ border: '1px solid #e2e2e2', borderRadius: '10px', background: '#fff', padding: '12px' }}>
-              <h2 style={{ fontSize: '14px', margin: '0 0 8px 0' }}>학습 계획 — {plan.qualification}</h2>
-              <div style={{ fontSize: '12px', marginBottom: '8px' }}>
-                시험일: {plan.examDate} · 총 {plan.totalWeeks}주 · 상태: <strong>{plan.status}</strong>
+            <Card style={{ padding: '12px' }}>
+              <h2 style={{ fontSize: '14px', margin: '0 0 8px 0', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                학습 계획 — {plan.qualification}
+              </h2>
+              <div style={{ fontSize: '12px', marginBottom: '8px', color: SP.silver }}>
+                시험일: <strong style={{ color: SP.white }}>{plan.examDate}</strong> · 총 <strong style={{ color: SP.white }}>{plan.totalWeeks}주</strong> · 상태: <strong style={{ color: SP.green }}>{plan.status}</strong>
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                <thead>
-                  <tr style={{ background: '#f0f0f0' }}>
-                    <th style={{ textAlign: 'left', padding: '4px 6px', border: '1px solid #ddd' }}>주차</th>
-                    <th style={{ textAlign: 'left', padding: '4px 6px', border: '1px solid #ddd' }}>초점</th>
-                    <th style={{ textAlign: 'left', padding: '4px 6px', border: '1px solid #ddd' }}>권장 시간</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {plan.weeks.map(w => (
-                    <tr key={w.week}>
-                      <td style={{ padding: '3px 6px', border: '1px solid #eee' }}>{w.week}주차</td>
-                      <td style={{ padding: '3px 6px', border: '1px solid #eee' }}>{w.focus}</td>
-                      <td style={{ padding: '3px 6px', border: '1px solid #eee' }}>{w.hours}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div style={{ marginTop: '8px', fontSize: '11px', background: '#f5f5f5', padding: '6px 8px', borderRadius: '6px' }}>
+              <Table
+                headers={['주차', '학습 초점', '권장 시간']}
+                rows={plan.weeks.map(w => [ `${w.week}주차`, w.focus, w.hours ])}
+              />
+              <div style={{ marginTop: '8px', fontSize: '12px', background: SP.announcement, padding: '8px 10px', borderRadius: '6px', color: '#121212', fontWeight: '600' }}>
                 <strong>오늘 브리핑:</strong> {plan.briefing.task} · 가장 가까운 마감: {plan.briefing.deadline}
               </div>
-            </section>
+            </Card>
           )}
         </aside>
       </div>
 
       {/* 탭 내비게이션 */}
-      <nav style={{ display: 'flex', gap: '6px', margin: '18px 0 10px', flexWrap: 'wrap', borderBottom: '1px solid #e2e2e2', paddingBottom: '8px' }}>
-        {[
-          ['chat', '💬 대화'], ['dashboard', '📊 추천'], ['schedule', '📅 일정'],
-          ['plan', '📋 계획'], ['profile', '👤 프로필'], ['p1', '🔧 추가 기능']
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id as TabId)}
-            style={{
-              background: tab === id ? '#1976d2' : 'transparent',
-              color: tab === id ? '#fff' : '#333',
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '16px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: tab === id ? '600' : '400',
-            }}
-          >
-            {label}
-          </button>
+      <nav style={{ display: 'flex', gap: '8px', margin: '20px 0 12px', flexWrap: 'wrap', paddingBottom: '10px' }}>
+        {tabs.map(([id, label]) => (
+          <TabButton key={id} active={tab === id} label={label} onClick={() => setTab(id as TabId)} />
         ))}
       </nav>
 
       {/* 탭 콘텐츠 */}
       {tab === 'dashboard' && (
-        <div style={{ background: '#fff', border: '1px solid #e2e2e2', borderRadius: '10px', padding: '14px', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '15px', marginTop: 0 }}>추천 결과 상세</h2>
+        <Card style={{ padding: '16px', marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '15px', marginTop: 0, fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            추천 결과 상세
+          </h2>
           {rec ? (
             <div>
               {rec.usedInfo.length > 0 && (
-                <div style={{ background: '#f5f5f5', padding: '8px 10px', borderRadius: '8px', fontSize: '12px', marginBottom: '10px' }}>
-                  <strong>이번 판단에 사용한 정보:</strong> {rec.usedInfo.join(', ')}
+                <div style={{ background: SP.surfaceAlt, padding: '10px 12px', borderRadius: '6px', fontSize: '13px', marginBottom: '12px', color: SP.silver, border: '1px solid', borderColor: SP.border }}>
+                  <strong style={{ color: SP.white }}>이번 판단에 사용한 정보:</strong> {rec.usedInfo.join(', ')}
                 </div>
               )}
-              <h3 style={{ fontSize: '14px', margin: '10px 0 4px' }}>🥇 1순위: {rec.primary.name}</h3>
-              <p style={{ fontSize: '13px', color: '#555', margin: '0 0 8px' }}>{rec.primary.reason}</p>
-              <p style={{ fontSize: '12px', color: '#777', margin: '0 0 12px' }}>준비 예상: {rec.primary.prepRange}<br></br>주의점: {rec.primary.caution}</p>
-
+              <h3 style={{ fontSize: '16px', margin: '12px 0 4px', fontWeight: '700', color: SP.green }}>
+                🥇 1순위: {rec.primary.name}
+              </h3>
+              <p style={{ fontSize: '14px', color: SP.nearWhite, margin: '0 0 10px', lineHeight: 1.6 }}>{rec.primary.reason}</p>
+              <p style={{ fontSize: '13px', color: SP.silver, margin: '0 0 12px', lineHeight: 1.6 }}>
+                준비 예상: {rec.primary.prepRange}
+                <br />
+                주의점: {rec.primary.caution}
+              </p>
               {rec.alternatives.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: '14px', margin: '14px 0 4px' }}>🥈 대안 자격증</h3>
+                  <h3 style={{ fontSize: '14px', margin: '16px 0 6px', fontWeight: '700', color: SP.silver, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    🥈 대안 자격증
+                  </h3>
                   {rec.alternatives.map((a, i) => (
-                    <div key={i} style={{ padding: '8px 10px', background: '#fafafa', borderRadius: '8px', fontSize: '13px', marginBottom: '6px' }}>
-                      <strong>{a.name}</strong> — {a.reason}
+                    <div key={i} style={{ padding: '10px 12px', background: SP.surfaceAlt, borderRadius: '6px', fontSize: '14px', marginBottom: '6px', color: SP.white, border: '1px solid', borderColor: SP.border }}>
+                      <strong style={{ color: SP.light }}>{a.name}</strong> — {a.reason}
                     </div>
                   ))}
                 </>
               )}
-
               {rec.path?.basic && (
                 <>
-                  <h3 style={{ fontSize: '14px', margin: '18px 0 6px' }}>기본 학습 경로</h3>
-                  <div style={{ fontSize: '13px', lineHeight: 1.7 }}>
-                    <div><strong>강의:</strong> {rec.path.basic.lecture}</div>
-                    <div><strong>기출·자료:</strong> {rec.path.basic.examMaterial}</div>
-                    <div><strong>교재:</strong> {rec.path.basic.textbook}</div>
-                    <div><strong>예상 비용:</strong> {rec.path.basic.estimatedCost}</div>
-                    <div><strong>선택 이유:</strong> {rec.path.basic.reason}</div>
+                  <h3 style={{ fontSize: '14px', margin: '20px 0 6px', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    기본 학습 경로
+                  </h3>
+                  <div style={{ fontSize: '13px', lineHeight: 1.8, color: SP.nearWhite }}>
+                    <div style={{ marginBottom: '4px' }}><strong>강의:</strong> {rec.path.basic.lecture}</div>
+                    <div style={{ marginBottom: '4px' }}><strong>기출·자료:</strong> {rec.path.basic.examMaterial}</div>
+                    <div style={{ marginBottom: '4px' }}><strong>교재:</strong> {rec.path.basic.textbook}</div>
+                    <div style={{ marginBottom: '4px' }}><strong>예상 비용:</strong> {rec.path.basic.estimatedCost}</div>
+                    <div style={{ marginBottom: '4px' }}><strong>선택 이유:</strong> {rec.path.basic.reason}</div>
                     {rec.path.basic.paidLecture && (
-                      <div style={{ marginTop: '8px', padding: '8px 10px', background: '#fff8e1', borderRadius: '8px' }}>
+                      <div style={{ marginTop: '8px', padding: '10px 12px', background: SP.warning, borderRadius: '6px', color: '#121212', fontWeight: '700', fontSize: '13px' }}>
                         <strong>유료 강의 옵션:</strong> {rec.path.basic.paidLecture}
                       </div>
                     )}
                     {rec.path.basic.caution && (
-                      <div style={{ color: '#c00', marginTop: '6px', fontSize: '12px' }}><strong>주의:</strong> {rec.path.basic.caution}</div>
+                      <div style={{ marginTop: '6px', color: SP.negative, fontWeight: '700', fontSize: '13px' }}>
+                        <strong>주의:</strong> {rec.path.basic.caution}
+                      </div>
                     )}
                   </div>
                 </>
               )}
-
               {rec.guideline && (
-                <div style={{ marginTop: '16px', padding: '10px 12px', background: '#e8f4fd', borderRadius: '8px', fontSize: '13px' }}>
-                  <h3 style={{ fontSize: '13px', margin: '0 0 6px' }}>📋 취업 가이드라인 (조건부 — 관심 공고·목표 직무 있을 때만)</h3>
+                <div style={{ marginTop: '18px', padding: '12px 14px', background: SP.announcement, borderRadius: '6px', fontSize: '13px', color: '#121212', lineHeight: 1.7, fontWeight: '500' }}>
+                  <h3 style={{ fontSize: '12px', margin: '0 0 6px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    📋 취업 가이드라인 (조건부 — 관심 공고·목표 직무 있을 때만)
+                  </h3>
                   <div><strong>직무 요약:</strong> {rec.guideline.jobSummary}</div>
                   <div><strong>필요 역량 묶음(반복 요건 기반):</strong> {rec.guideline.requiredSkills}</div>
                   <div><strong>자격증 연결:</strong> {rec.guideline.certConnection}</div>
@@ -505,97 +680,99 @@ export default function Home() {
               )}
             </div>
           ) : (
-            <p style={{ color: '#777', fontSize: '13px' }}>대화가 진행되면 여기에 추천 결과가 표시돼요.</p>
+            <p style={{ color: SP.silver, fontSize: '14px', lineHeight: 1.6 }}>대화가 진행되면 여기에 추천 결과가 표시돼요.</p>
           )}
-        </div>
+        </Card>
       )}
 
       {tab === 'schedule' && (
-        <div style={{ background: '#fff', border: '1px solid #e2e2e2', borderRadius: '10px', padding: '14px', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '15px', marginTop: 0 }}>공식 시험 정보 확인 (P0-2)</h2>
+        <Card style={{ padding: '16px', marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '15px', marginTop: 0, fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            공식 시험 정보 확인 (P0-2)
+          </h2>
           {schedule ? (
             <div>
-              <p style={{ fontSize: '12px', color: '#777', marginBottom: '10px' }}>
-                web_extract로 주관기관 공식 원문을 직접 확인했어요. 출처·확인 날짜는 각 항목 아래에 표시돼요.<br></br>
+              <p style={{ fontSize: '12px', color: SP.silver, marginBottom: '12px', lineHeight: 1.6 }}>
+                web_extract로 주관기관 공식 원문을 직접 확인했어요. 출처·확인 날짜는 각 항목 아래에 표시돼요.
+                <br />
                 미발표 항목은 &quot;미확인&quot; 또는 &quot;공식 일정 미발표&quot;로 표시되고, 지난 회차는 목표 후보에서 제외돼요.
               </p>
               {schedule.items.map((it, i) => (
-                <div key={i} style={{ padding: '8px 10px', background: '#fafafa', borderRadius: '8px', marginBottom: '6px', fontSize: '13px' }}>
-                  <strong>{it.label}:</strong> {it.value}
-                  {it.source && <div style={{ color: '#888', fontSize: '11px', marginTop: '2px' }}>출처: {it.source}</div>}
-                  {it.note && <div style={{ color: '#c00', fontSize: '11px' }}>{it.note}</div>}
+                <div key={i} style={{ padding: '10px 12px', background: SP.surfaceAlt, borderRadius: '6px', marginBottom: '6px', fontSize: '14px', color: SP.white, border: '1px solid', borderColor: SP.border }}>
+                  <strong style={{ color: SP.light }}>{it.label}:</strong> {it.value}
+                  {it.source && <div style={{ color: SP.silver, fontSize: '11px', marginTop: '3px' }}>출처: {it.source}</div>}
+                  {it.note && <div style={{ color: SP.negative, fontSize: '11px', marginTop: '3px', fontWeight: '600' }}>{it.note}</div>}
                 </div>
               ))}
             </div>
           ) : (
             <>
-              <p style={{ color: '#777', fontSize: '13px', marginBottom: '10px' }}>특정 자격증에 대해 &quot;OO자격증 일정 알려줘&quot;라고 물어보시면 여기서 공식 일정을 확인할 수 있어요.</p>
-              <div style={{ background: '#f5f5f5', padding: '10px', borderRadius: '8px', fontSize: '12px', color: '#555' }}>
-                <strong>예시 질문:</strong> &quot;정보처리기사 시험 일정 알려줘&quot; / &quot;SQLD 응시료랑 접수 일정 알려줘&quot; / &quot;컴퓨터활용능력 1급 시험일 언제야&quot;
+              <p style={{ color: SP.silver, fontSize: '14px', marginBottom: '12px', lineHeight: 1.6 }}>
+                특정 자격증에 대해 &quot;OO자격증 일정 알려줘&quot;라고 물어보시면 여기서 공식 일정을 확인할 수 있어요.
+              </p>
+              <div style={{ background: SP.surfaceAlt, padding: '12px 14px', borderRadius: '6px', fontSize: '13px', color: SP.nearWhite, border: '1px solid', borderColor: SP.border }}>
+                <strong style={{ color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '11px' }}>예시 질문:</strong>
+                <br />
+                &quot;정보처리기사 시험 일정 알려줘&quot; / &quot;SQLD 응시료랑 접수 일정 알려줘&quot; / &quot;컴퓨터활용능력 1급 시험일 언제야&quot;
               </div>
             </>
           )}
-        </div>
+        </Card>
       )}
 
       {tab === 'plan' && (
-        <div style={{ background: '#fff', border: '1px solid #e2e2e2', borderRadius: '10px', padding: '14px', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '15px', marginTop: 0 }}>학습 계획·체크인·재조정 (P0-4)</h2>
+        <Card style={{ padding: '16px', marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '15px', marginTop: 0, fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            학습 계획·체크인·재조정 (P0-4)
+          </h2>
           {plan ? (
             <div>
-              <p style={{ fontSize: '12px', color: '#777', marginBottom: '10px' }}>
+              <p style={{ fontSize: '12px', color: SP.silver, marginBottom: '12px', lineHeight: 1.6 }}>
                 주차별 계획 표를 미리볼 수 있어요. 준비 시작을 원하면 프로필 탭에서 저장 후 대화를 통해 &quot;이 자격증 준비 시작할래&quot;라고 말해 주세요. (Notion 학습 공간 생성은 동의 후, 미연결 시 워크스페이스 파일 대체)
               </p>
-              <div style={{ marginBottom: '10px' }}>
-                <div style={{ fontSize: '12px', color: '#555' }}>시험일: <strong>{plan.examDate}</strong> · 총 <strong>{plan.totalWeeks}주</strong> · 상태: <strong>{plan.status}</strong></div>
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '13px', color: SP.silver }}>
+                  시험일: <strong style={{ color: SP.white }}>{plan.examDate}</strong> · 총 <strong style={{ color: SP.white }}>{plan.totalWeeks}주</strong> · 상태: <strong style={{ color: SP.green }}>{plan.status}</strong>
+                </div>
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', marginBottom: '10px' }}>
-                <thead>
-                  <tr style={{ background: '#f0f0f0' }}>
-                    <th style={{ textAlign: 'left', padding: '5px 8px', border: '1px solid #ddd' }}>주차</th>
-                    <th style={{ textAlign: 'left', padding: '5px 8px', border: '1px solid #ddd' }}>학습 초점</th>
-                    <th style={{ textAlign: 'left', padding: '5px 8px', border: '1px solid #ddd' }}>권장 시간</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {plan.weeks.map(w => (
-                    <tr key={w.week} style={{ background: w.done ? '#fafafa' : 'transparent' }}>
-                      <td style={{ padding: '4px 8px', border: '1px solid #eee' }}>{w.week}주차</td>
-                      <td style={{ padding: '4px 8px', border: '1px solid #eee' }}>{w.focus}</td>
-                      <td style={{ padding: '4px 8px', border: '1px solid #eee' }}>{w.hours}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div style={{ background: '#e8f4fd', padding: '8px 10px', borderRadius: '8px', fontSize: '12px', marginBottom: '10px' }}>
-                <strong>오늘 브리핑:</strong> {plan.briefing.task}<br></br>
+              <Table
+                headers={['주차', '학습 초점', '권장 시간']}
+                rows={plan.weeks.map(w => [ `${w.week}주차`, w.focus, w.hours ])}
+              />
+              <div style={{ background: SP.announcement, padding: '10px 12px', borderRadius: '6px', fontSize: '13px', color: '#121212', fontWeight: '700', marginTop: '10px' }}>
+                오늘 브리핑: {plan.briefing.task}
+                <br />
                 가장 가까운 마감: {plan.briefing.deadline}
               </div>
-              <p style={{ fontSize: '11px', color: '#777' }}>
-                지연 3일 이상 또는 주당 가용시간 50% 초과 시 재조정(시험일 고정, 앞 단계 압축·뒤 단계 보호)돼요.<br></br>
+              <p style={{ fontSize: '11px', color: SP.silver, marginTop: '10px', lineHeight: 1.6 }}>
+                지연 3일 이상 또는 주당 가용시간 50% 초과 시 재조정(시험일 고정, 앞 단계 압축·뒤 단계 보호)돼요.
+                <br />
                 3일 연속 미완료 시 &quot;계획 줄이고 싶으면 말해 주세요&quot; 안내가 나가요.
               </p>
             </div>
           ) : (
             <>
-              <p style={{ color: '#777', fontSize: '13px', marginBottom: '10px' }}>
+              <p style={{ color: SP.silver, fontSize: '14px', marginBottom: '12px', lineHeight: 1.6 }}>
                 자격증 추천을 받은 뒤 &quot;이 자격증 준비 시작할래&quot;라고 말하면 주차별 계획이 만들어져요.
               </p>
-              <div style={{ background: '#f5f5f5', padding: '10px', borderRadius: '8px', fontSize: '12px', color: '#555' }}>
-                <strong>예시 질문:</strong> &quot;정보처리기사 주 5시간으로 시험일까지 학습 계획 세워줘&quot; / &quot;오늘 뭐 공부해?&quot; / &quot;계획 줄여줘&quot;
+              <div style={{ background: SP.surfaceAlt, padding: '12px 14px', borderRadius: '6px', fontSize: '13px', color: SP.nearWhite, border: '1px solid', borderColor: SP.border }}>
+                <strong style={{ color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '11px', display: 'block', marginBottom: '4px' }}>예시 질문:</strong>
+                &quot;정보처리기사 주 5시간으로 시험일까지 학습 계획 세워줘&quot; / &quot;오늘 뭐 공부해?&quot; / &quot;계획 줄여줘&quot;
               </div>
             </>
           )}
-        </div>
+        </Card>
       )}
 
       {tab === 'profile' && (
-        <div style={{ background: '#fff', border: '1px solid #e2e2e2', borderRadius: '10px', padding: '14px', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '15px', marginTop: 0 }}>프로필 — 조건 확인·변경 (P1-3)</h2>
-          <p style={{ fontSize: '12px', color: '#777', marginBottom: '12px' }}>
+        <Card style={{ padding: '16px', marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '15px', marginTop: 0, fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            프로필 — 조건 확인·변경 (P1-3)
+          </h2>
+          <p style={{ fontSize: '12px', color: SP.silver, marginBottom: '14px', lineHeight: 1.6 }}>
             대화 중에 저장된 프로필을 확인하고, 필요하면 이 탭에서 직접 바꿀 수 있어요. 변경된 조건은 기존 추천·계획 재계산에 반영돼요. (이미 확인된 값은 함부로 바꾸지 않고 새 정보만 갱신)
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', marginBottom: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', marginBottom: '16px' }}>
             {[
               ['진로 / 관심 직무', profile.진로 ?? '<미설정>'],
               ['보유 자격증', (profile.보유자격증 && profile.보유자격증.length > 0) ? profile.보유자격증.join(', ') : '<없음>'],
@@ -610,68 +787,109 @@ export default function Home() {
               ['영어 성적', profile.영어성적 ?? '<미설정>'],
               ['유효기간 자산', profile.유효기간자산 ?? '<미설정>'],
             ].map(([label, value]) => (
-              <div key={label} style={{ padding: '6px 8px', background: '#fafafa', borderRadius: '6px' }}>
-                <div style={{ fontSize: '10px', color: '#888' }}>{label}</div>
-                <div style={{ fontWeight: '500' }}>{value}</div>
+              <div key={label} style={{ padding: '8px 10px', background: SP.surfaceAlt, borderRadius: '6px', border: '1px solid', borderColor: SP.border }}>
+                <div style={{ fontSize: '10px', color: SP.silver, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600', marginBottom: '3px' }}>{label}</div>
+                <div style={{ fontWeight: '600', color: SP.white }}>{value}</div>
               </div>
             ))}
           </div>
-          <div style={{ fontSize: '12px', color: '#777' }}>
-            💡 대화 중에 &quot;내 목표가 바뀌었어&quot; 또는 &quot;비용 선호를 변경할래&quot;라고 말하면 여기서 반영돼요.<br></br>
+          <div style={{ fontSize: '12px', color: SP.silver, lineHeight: 1.6 }}>
+            💡 대화 중에 &quot;내 목표가 바뀌었어&quot; 또는 &quot;비용 선호를 변경할래&quot;라고 말하면 여기서 반영돼요.
+            <br />
             프로필을 처음 저장하려면 대화 중에 저장하고 싶은 정보를 알려주면 돼요. 저장 전 동의를 받아요.
           </div>
-        </div>
+        </Card>
       )}
 
       {tab === 'p1' && (
-        <div style={{ background: '#fff', border: '1px solid #e2e2e2', borderRadius: '10px', padding: '14px', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '15px', marginTop: 0 }}>추가 기능 (P1)</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '13px' }}>
+        <Card style={{ padding: '16px', marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '15px', marginTop: 0, fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            추가 기능 (P1)
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '13px', color: SP.nearWhite }}>
             {/* P1-1 캘린더 */}
             <section>
-              <h3 style={{ fontSize: '14px', margin: '0 0 6px' }}>📅 캘린더 등록 (P1-1, 동의 기반)</h3>
-              <p style={{ fontSize: '12px', color: '#555', marginBottom: '8px' }}>
-                Google Calendar 커넥터 연결 확인 후, 공식 확정 일정만 사용자 동의 후 등록해요.<br></br>
+              <h3 style={{ fontSize: '14px', margin: '0 0 6px', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                📅 캘린더 등록 (P1-1, 동의 기반)
+              </h3>
+              <p style={{ fontSize: '12px', color: SP.silver, marginBottom: '8px', lineHeight: 1.6 }}>
+                Google Calendar 커넥터 연결 확인 후, 공식 확정 일정만 사용자 동의 후 등록해요.
+                <br />
                 취득 결정·접수 완료 상태에서 별도 동의 질문을 거쳐요.
               </p>
               {schedule ? (
-                <div style={{ background: '#f5f5f5', padding: '8px 10px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '12px' }}>
-                    현재 대화에서 확인된 일정: <strong>{schedule.qualification}</strong>
+                <div style={{ background: SP.surfaceAlt, padding: '10px 12px', borderRadius: '6px', border: '1px solid', borderColor: SP.border }}>
+                  <div style={{ fontSize: '13px', color: SP.white, marginBottom: '2px' }}>
+                    현재 대화에서 확인된 일정: <strong style={{ color: SP.green }}>{schedule.qualification}</strong>
                   </div>
                   {!calendarConsentAsked ? (
                     <button
                       onClick={() => setCalendarConsentAsked(true)}
-                      style={{ marginTop: '8px', padding: '6px 10px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                      style={{
+                        marginTop: '10px',
+                        padding: '8px 14px',
+                        background: SP.green,
+                        color: '#000000',
+                        border: 'none',
+                        borderRadius: '9999px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1.4px',
+                      }}
                     >
                       캘린더 등록 동의 물어보기
                     </button>
                   ) : (
-                    <div style={{ marginTop: '8px' }}>
-                      <div style={{ fontSize: '12px', marginBottom: '6px' }}>
+                    <div style={{ marginTop: '10px' }}>
+                      <div style={{ fontSize: '12px', marginBottom: '8px', color: SP.silver }}>
                         공식 확정된 일정을 캘린더에 등록할까요? (미등록 시 텍스트 일정과 연결 안내로 대체돼요)
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
                           onClick={() => setCalendarConsent(true)}
-                          style={{ padding: '5px 10px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                          style={{
+                            padding: '7px 14px',
+                            background: SP.green,
+                            color: '#000000',
+                            border: 'none',
+                            borderRadius: '9999px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1.4px',
+                          }}
                         >
                           등록 동의
                         </button>
                         <button
                           onClick={() => setCalendarConsent(false)}
-                          style={{ padding: '5px 10px', background: '#eee', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                          style={{
+                            padding: '7px 14px',
+                            background: 'transparent',
+                            color: SP.silver,
+                            border: '1px solid',
+                            borderColor: SP.lightBorder,
+                            borderRadius: '9999px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1.4px',
+                          }}
                         >
                           등록 안 함
                         </button>
                       </div>
                       {calendarConsent === true && (
-                        <div style={{ marginTop: '6px', color: '#1976d2', fontSize: '12px' }}>
+                        <div style={{ marginTop: '6px', color: SP.green, fontSize: '12px', fontWeight: '600' }}>
                           ✓ 동의했어요. (실제 등록은 /api/calendar-preview에서 커넥터 상태에 따라 진행 — 미연결 시 텍스트 일정+연결 안내로 대체)
                         </div>
                       )}
                       {calendarConsent === false && (
-                        <div style={{ marginTop: '6px', fontSize: '12px', color: '#777' }}>
+                        <div style={{ marginTop: '6px', fontSize: '12px', color: SP.silver }}>
                           등록하지 않기로 했어요. 텍스트 일정과 연결 안내를 제공해요.
                         </div>
                       )}
@@ -679,110 +897,168 @@ export default function Home() {
                   )}
                 </div>
               ) : (
-                <p style={{ fontSize: '12px', color: '#777' }}>먼저 대화에서 특정 자격증 일정을 확인해 주세요.</p>
+                <p style={{ fontSize: '12px', color: SP.silver }}>먼저 대화에서 특정 자격증 일정을 확인해 주세요.</p>
               )}
             </section>
 
             {/* P1-2 다음 경로 */}
             <section>
-              <h3 style={{ fontSize: '14px', margin: '0 0 6px' }}>🔜 취득 후 다음 경로 + 보유 자격증 갱신 (P1-2)</h3>
-              <p style={{ fontSize: '12px', color: '#555', marginBottom: '8px' }}>
-                &quot;취득했다&quot;고 직접 말한 경우만 확정해요. 보유 자격증·등급을 확인하고 프로필에 추가(동의 시)해요.<br></br>
-                기존 자격증과 과도한 중복 후보는 낮추고, 새로운 직무 가치를 더하는 1순위+대안을 제시해요.<br></br>
+              <h3 style={{ fontSize: '14px', margin: '0 0 6px', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                🔜 취득 후 다음 경로 + 보유 자격증 갱신 (P1-2)
+              </h3>
+              <p style={{ fontSize: '12px', color: SP.silver, marginBottom: '8px', lineHeight: 1.6 }}>
+                &quot;취득했다&quot;고 직접 말한 경우만 확정해요. 보유 자격증·등급을 확인하고 프로필에 추가(동의 시)해요.
+                <br />
+                기존 자격증과 과도한 중복 후보는 낮추고, 새로운 직무 가치를 더하는 1순위+대안을 제시해요.
+                <br />
                 추가 자격증보다 프로젝트·실무·포트폴리오가 우선인 시점이면 솔직히 말해요.
               </p>
-              <div style={{ background: '#f5f5f5', padding: '8px 10px', borderRadius: '8px', fontSize: '12px', color: '#555' }}>
+              <div style={{ background: SP.surfaceAlt, padding: '10px 12px', borderRadius: '6px', fontSize: '12px', color: SP.silver, border: '1px solid', borderColor: SP.border }}>
                 예시: &quot;정보처리기사 취득했어&quot; / &quot;SQLD 시험 합격했어&quot; / &quot;다음엔 뭘 따면 좋을까?&quot;
               </div>
             </section>
 
             {/* P1-3 조건 변경 */}
             <section>
-              <h3 style={{ fontSize: '14px', margin: '0 0 6px' }}>🔄 프로필 조건 변경 반영 (P1-3)</h3>
-              <p style={{ fontSize: '12px', color: '#555' }}>
+              <h3 style={{ fontSize: '14px', margin: '0 0 6px', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                🔄 프로필 조건 변경 반영 (P1-3)
+              </h3>
+              <p style={{ fontSize: '12px', color: SP.silver, lineHeight: 1.6 }}>
                 비용 선호·가용시간·학습 방식·목표 시기가 바뀌면 기존 추천·계획이 재계산돼요. 이미 확인된 값은 함부로 바꾸지 않고 새 정보만 갱신해요. (프로필 탭에서도 수정 가능)
               </p>
             </section>
 
             {/* P1-4 결과 반영 */}
             <section>
-              <h3 style={{ fontSize: '14px', margin: '0 0 6px' }}>📈 합격/불합격 결과 반영 (P1-4)</h3>
-              <p style={{ fontSize: '12px', color: '#555' }}>
-                &quot;합격했어&quot; → 보유 자격증 추가, 상태 합격, 다음 자격증 제안(E 모드)<br></br>
+              <h3 style={{ fontSize: '14px', margin: '0 0 6px', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                📈 합격/불합격 결과 반영 (P1-4)
+              </h3>
+              <p style={{ fontSize: '12px', color: SP.silver, lineHeight: 1.6 }}>
+                &quot;합격했어&quot; → 보유 자격증 추가, 상태 합격, 다음 자격증 제안(E 모드)
+                <br />
                 &quot;불합격했어&quot; → 완료율 가장 낮았던 단계 사실만 말하고, 다음 회차 공식 일정 확인 후 그 단계 비중을 올린 계획 제안 (위로보다 다음 계획 먼저)
               </p>
             </section>
 
             {/* P1-5 유효기간 */}
             <section>
-              <h3 style={{ fontSize: '14px', margin: '0 0 6px' }}>⏳ 유효기간 자산 관리 (P1-5, 사용자 원할 때만)</h3>
-              <p style={{ fontSize: '12px', color: '#555' }}>
-                보유 자격증·영어 성적 등 유효기간 있는 자산을, 사용자가 제공 취득/만료 시점 + 공식 규정 바탕으로 유효 여부·갱신 시점 검토해요.<br></br>
+              <h3 style={{ fontSize: '14px', margin: '0 0 6px', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                ⏳ 유효기간 자산 관리 (P1-5, 사용자 원할 때만)
+              </h3>
+              <p style={{ fontSize: '12px', color: SP.silver, lineHeight: 1.6 }}>
+                보유 자격증·영어 성적 등 유효기간 있는 자산을, 사용자가 제공 취득/만료 시점 + 공식 규정 바탕으로 유효 여부·갱신 시점 검토해요.
+                <br />
                 사용자가 원하지 않으면 이름·등급 중심으로만 확인하고 유효기간 관리는 진행하지 않아요.
               </p>
             </section>
 
             {/* P1-6 취업 */}
             <section>
-              <h3 style={{ fontSize: '14px', margin: '0 0 6px' }}>💼 취업 가이드라인 (P1-6, 조건부)</h3>
-              <p style={{ fontSize: '12px', color: '#555' }}>
-                관심 공고·목표 직무가 있을 때만, web_extract로 반복 요건을 추출해 직무 요약·필요 역량 묶음·자격증 연결·포트폴리오 방향·참고 공고 링크/확인 날짜를 제공해요.<br></br>
+              <h3 style={{ fontSize: '14px', margin: '0 0 6px', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                💼 취업 가이드라인 (P1-6, 조건부)
+              </h3>
+              <p style={{ fontSize: '12px', color: SP.silver, lineHeight: 1.6 }}>
+                관심 공고·목표 직무가 있을 때만, web_extract로 반복 요건을 추출해 직무 요약·필요 역량 묶음·자격증 연결·포트폴리오 방향·참고 공고 링크/확인 날짜를 제공해요.
+                <br />
                 관심 공고·목표 직무가 없으면 이 블록은 출력하지 않아요.
               </p>
               {profile.관심공고 && (
-                <div style={{ background: '#e8f4fd', padding: '8px 10px', borderRadius: '8px', fontSize: '12px' }}>
+                <div style={{ background: SP.announcement, padding: '10px 12px', borderRadius: '6px', fontSize: '12px', color: '#121212', fontWeight: '600' }}>
                   관심 공고: {profile.관심공고} → 취업 가이드라인 블록을 조건에 맞게 제공해요.
                 </div>
               )}
             </section>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* 저장 동의 모달 */}
       {shownConsent && (
         <div
           style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             zIndex: 1000,
+            backdropFilter: 'blur(4px)',
           }}
         >
-          <div style={{ background: '#fff', borderRadius: '8px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-            <h3 style={{ marginTop: 0, fontSize: '16px', marginBottom: '12px' }}>프로필 저장 동의</h3>
-            <p style={{ fontSize: '13px', color: '#555', marginBottom: '16px' }}>
+          <div style={{
+            background: SP.surface,
+            borderRadius: '8px',
+            padding: '28px',
+            width: '100%',
+            maxWidth: '420px',
+            boxShadow: 'rgba(0,0,0,0.5) 0px 8px 24px',
+            border: '1px solid',
+            borderColor: SP.greenBorder,
+          }}>
+            <h3 style={{ marginTop: 0, fontSize: '18px', marginBottom: '14px', fontWeight: '700', color: SP.white, textTransform: 'uppercase', letterSpacing: '1px' }}>
+              프로필 저장 동의
+            </h3>
+            <p style={{ fontSize: '13px', color: SP.silver, marginBottom: '18px', lineHeight: 1.6 }}>
               추천을 더 정확하게 맞춤화하려면 프로필 정보를 저장합니다.
               저장 전 동의를 받습니다. 저장된 정보는 로컬 스토리지에만 보관되며, 다른 기기에서는 사용할 수 없습니다.
             </p>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '4px' }}>
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '700', color: SP.silver, display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 현재 저장된 프로필 (없을 수 있음)
               </label>
               <pre style={{
                 fontSize: '11px',
-                background: '#f5f5f5',
-                padding: '10px',
-                borderRadius: '4px',
+                background: SP.bg,
+                color: SP.nearWhite,
+                padding: '12px',
+                borderRadius: '6px',
                 whiteSpace: 'pre-wrap',
-                maxHeight: '150px',
+                maxHeight: '160px',
                 overflow: 'auto',
+                border: '1px solid',
+                borderColor: SP.border,
+                fontFamily: 'inherit',
               }}>
                 {JSON.stringify(profile, null, 2) || '(저장된 프로필 없음)'}
               </pre>
             </div>
-
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShownConsent(false)}
-                style={{ padding: '8px 16px', fontSize: '13px', border: '1px solid #ddd', borderRadius: '6px', background: '#f5f5f5', cursor: 'pointer' }}
+                style={{
+                  padding: '9px 18px',
+                  fontSize: '13px',
+                  border: '1px solid',
+                  borderColor: SP.lightBorder,
+                  borderRadius: '9999px',
+                  background: 'transparent',
+                  color: SP.silver,
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.4px',
+                }}
               >
                 나중에
               </button>
               <button
                 onClick={동의후저장}
-                style={{ padding: '8px 16px', fontSize: '13px', backgroundColor: '#1976d2', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                style={{
+                  padding: '9px 18px',
+                  fontSize: '13px',
+                  backgroundColor: SP.green,
+                  color: '#000000',
+                  border: 'none',
+                  borderRadius: '9999px',
+                  cursor: 'pointer',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.4px',
+                }}
               >
                 저장하고 사용
               </button>

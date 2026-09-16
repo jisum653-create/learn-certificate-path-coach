@@ -58,64 +58,105 @@ interface PlanData {
   status: '준비중' | '접수완료' | '응시완료' | '합격' | '불합격'
 }
 
-// ---------- Apple 디자인 토큰 ----------
-const C = {
-  white: '#ffffff',
-  parchment: '#f5f5f7',
-  ink: '#1d1d1f',
-  muted: '#333333',
-  muted2: '#7a7a7a',
-  muted3: '#999999',
-  hairline: '#e0e0e0',
-  hairlineStrong: '#d2d2d7',
-  accent: '#0066cc',
-  accentHover: '#0052a3',
-  accentFocus: '#0071e3',
-  accentDark: '#2997ff',
-  darkTile: '#272729',
-  darkTileText: '#ffffff',
-  success: '#34c759',
-  warning: '#ff9500',
-  danger: '#ff3b30',
-  back: '#f5f5f7',
+// ---------- Apple 디자인 토큰 (디자인 시스템) ----------
+const tokens = {
+  colors: {
+    white: '#ffffff',
+    parchment: '#f5f5f7',
+    parchmentStrong: '#efedef',
+    ink: '#1d1d1f',
+    inkDark: '#000000',
+    inkLight: '#333333',
+    muted: '#7a7a7a',
+    mutedLight: '#999999',
+    hairline: '#e0e0e0',
+    hairlineStrong: '#d2d2d7',
+    accent: '#0066cc',
+    accentHover: '#0052a3',
+    accentFocus: '#0071e3',
+    accentLight: '#b3d4fc',
+    accentBg: '#e8f0fe',
+    success: '#34c759',
+    successBg: '#e8f5e9',
+    successBorder: '#b8e0c0',
+    warning: '#ff9500',
+    warningBg: '#fff4e5',
+    warningBorder: '#ffcc80',
+    danger: '#ff3b30',
+    dangerBg: '#fde8e8',
+    dangerBorder: '#f5c6c6',
+    successDark: '#1b7a3d',
+    warningDark: '#b85c00',
+    back: '#f5f5f7',
+  },
+  fonts: {
+    family: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif',
+    display: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif',
+    mono: 'ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace',
+  },
+  type: {
+    heroDisplay: { size: 'clamp(32px, 5vw, 56px)', weight: 600, lh: 1.07, tracking: '-0.28px' },
+    displayLg: { size: 'clamp(28px, 4vw, 40px)', weight: 600, lh: 1.1, tracking: '0px' },
+    displayMd: { size: 'clamp(24px, 3.5vw, 34px)', weight: 600, lh: 1.15, tracking: '-0.374px' },
+    h1: { size: 'clamp(24px, 3vw, 32px)', weight: 600, lh: 1.15, tracking: '-0.3px' },
+    h2: { size: '22px', weight: 600, lh: 1.2, tracking: '-0.3px' },
+    h3: { size: '18px', weight: 600, lh: 1.3, tracking: '-0.3px' },
+    body: { size: '17px', weight: 400, lh: 1.47, tracking: '-0.3px' },
+    bodyStrong: { size: '17px', weight: 600, lh: 1.3, tracking: '-0.3px' },
+    bodySmall: { size: '15px', weight: 400, lh: 1.43, tracking: '-0.3px' },
+    caption: { size: '14px', weight: 400, lh: 1.43, tracking: '-0.2px' },
+    captionStrong: { size: '14px', weight: 600, lh: 1.3, tracking: '-0.2px' },
+    small: { size: '12px', weight: 400, lh: 1.35, tracking: '-0.1px' },
+    smallStrong: { size: '12px', weight: 600, lh: 1.3, tracking: '-0.1px' },
+    micro: { size: '10px', weight: 500, lh: 1.3, tracking: '-0.05px' },
+    utility: { size: '13px', weight: 500, lh: 1.29, tracking: '-0.2px' },
+    overline: { size: '10px', weight: 600, lh: 1.2, tracking: '0.12em' },
+  },
+  radius: {
+    none: 0,
+    xs: 5,
+    sm: 8,
+    md: 12,
+    lg: 18,
+    xl: 24,
+    pill: 9999,
+  },
+  spacing: {
+    xxs: 4,
+    xs: 8,
+    sm: 12,
+    md: 16,
+    lg: 24,
+    xl: 32,
+    xxl: 48,
+    section: 80,
+  },
+  shadows: {
+    card: '0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06)',
+    raised: '0 4px 12px rgba(0, 0, 0, 0.06)',
+    modal: '0 12px 40px rgba(0, 0, 0, 0.14)',
+    button: '0 1px 3px rgba(0, 102, 204, 0.3)',
+  },
+  borders: {
+    hairline: '1px solid var(--hairline)',
+    accent: '1px solid var(--accent)',
+    none: 'none',
+  },
 }
 
-const F = {
-  family: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Segoe UI, system-ui, sans-serif',
-  display: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
+// ---------- Hooks ----------
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const m = window.matchMedia(query)
+    setMatches(m.matches)
+    const h = () => setMatches(m.matches)
+    m.addEventListener('change', h)
+    return () => m.removeEventListener('change', h)
+  }, [query])
+  return matches
 }
-
-const T = {
-  hero: { size: 'clamp(30px, 4.5vw, 52px)', weight: 600, lh: 1.07, tracking: '-0.28px' },
-  h1:   { size: 'clamp(26px, 3.5vw, 38px)', weight: 600, lh: 1.1, tracking: '0px' },
-  h2:   { size: '20px', weight: 600, lh: 1.2, tracking: '-0.2px' },
-  h3:   { size: '17px', weight: 600, lh: 1.3, tracking: '-0.3px' },
-  body: { size: '17px', weight: 400, lh: 1.47, tracking: '-0.3px' },
-  bodyStrong: { size: '17px', weight: 600, lh: 1.3, tracking: '-0.3px' },
-  caption: { size: '14px', weight: 400, lh: 1.43, tracking: '-0.2px' },
-  captionStrong: { size: '14px', weight: 600, lh: 1.3, tracking: '-0.2px' },
-  small: { size: '12px', weight: 400, lh: 1.35, tracking: '-0.1px' },
-  smallStrong: { size: '12px', weight: 600, lh: 1.3, tracking: '-0.1px' },
-  micro: { size: '10px', weight: 500, lh: 1.3, tracking: '-0.05px' },
-  utility: { size: '13px', weight: 500, lh: 1.29, tracking: '-0.2px' },
-}
-
-const R = { none: 0, sm: 8, md: 11, lg: 18, pill: 9999 }
-
-const S = {
-  xxs: 4, xs: 8, sm: 12, md: 16, lg: 24, xl: 32, xxl: 48
-}
-
-const SH = {
-  card: '0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06)',
-  raised: '0 4px 12px rgba(0,0,0,0.06)',
-  modal: '0 12px 40px rgba(0,0,0,0.14)',
-}
-
-const 유료가이드라인 =
-  '유료 강의 추천 시 이유 없이 유료부터 제시하지 않고, 사용자가 유료 허용 시 유료 후보를 포함하며, ' +
-  '유료 강의는 가격·무료 전환 지점·전체 범위 cover 여부를 반드시 표시하고 사용자 조건과 연결해 설명하되, ' +
-  '무료 대안이 있으면 함께 제시한다.'
 
 // ---------- localStorage helpers ----------
 function loadProfile(): Profile {
@@ -126,10 +167,12 @@ function loadProfile(): Profile {
     return JSON.parse(raw) as Profile
   } catch { return {} }
 }
+
 function saveProfile(p: Profile, 동의: boolean) {
   if (!동의) return
   localStorage.setItem('certCoachProfile', JSON.stringify({ ...p, 저장동의: true }))
 }
+
 function clearProfile() {
   localStorage.removeItem('certCoachProfile')
   localStorage.removeItem('certCoachMessages')
@@ -155,6 +198,7 @@ function loadMessages(): Message[] {
     return JSON.parse(raw) as Message[]
   } catch { return [] }
 }
+
 function saveMessages(msgs: Message[]) {
   localStorage.setItem('certCoachMessages', JSON.stringify(msgs))
 }
@@ -177,12 +221,11 @@ function metaBadge(meta?: string): string {
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
 }
+
 function getFirstDayOfMonth(year: number, month: number): number {
   return new Date(year, month, 1).getDay()
 }
-function formatDate(year: number, month: number, day: number): string {
-  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-}
+
 function parseDate(str: string): Date | null {
   if (!str) return null
   const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/)
@@ -190,6 +233,7 @@ function parseDate(str: string): Date | null {
   const d = new Date(+m[1], +m[2] - 1, +m[3])
   return isNaN(d.getTime()) ? null : d
 }
+
 function extractExamDate(items: ScheduleData['items']): string | null {
   const it = items.find(i =>
     i.label.includes('시험일정') || i.label.includes('시험일') || i.label.includes('시험 날짜')
@@ -197,34 +241,54 @@ function extractExamDate(items: ScheduleData['items']): string | null {
   return it ? it.value : null
 }
 
+// ============================================================
+//  컴포넌트
+// ============================================================
+
 // ---------- 메시지 버블 ----------
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user'
+  const [visible, setVisible] = useState(isUser)
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 10)
+    return () => clearTimeout(t)
+  }, [msg])
+
   return (
-    <div style={{
-      maxWidth: isUser ? '80%' : '88%',
-      alignSelf: isUser ? 'flex-end' : 'flex-start',
-      background: isUser ? C.ink : C.parchment,
-      color: isUser ? C.white : C.ink,
-      borderRadius: isUser ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
-      padding: '10px 14px',
-      fontSize: T.body.size,
-      lineHeight: T.body.lh,
-      fontWeight: T.body.weight,
-      fontFamily: F.family,
-      letterSpacing: T.body.tracking,
-      wordBreak: 'break-word',
-    }}>
+    <div
+      style={{
+        maxWidth: isUser ? '80%' : '88%',
+        alignSelf: isUser ? 'flex-end' : 'flex-start',
+        background: isUser ? tokens.colors.ink : tokens.colors.parchment,
+        color: isUser ? tokens.colors.white : tokens.colors.ink,
+        borderRadius: isUser
+          ? `${tokens.radius.lg}px ${tokens.radius.xs}px ${tokens.radius.lg}px ${tokens.radius.lg}px`
+          : `${tokens.radius.xs}px ${tokens.radius.lg}px ${tokens.radius.lg}px ${tokens.radius.lg}px`,
+        padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+        fontSize: tokens.type.body.size,
+        lineHeight: tokens.type.body.lh,
+        fontWeight: tokens.type.body.weight,
+        fontFamily: tokens.fonts.family,
+        letterSpacing: tokens.type.body.tracking,
+        wordBreak: 'break-word',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(6px)',
+        transition: 'opacity 200ms ease, transform 200ms ease',
+      }}
+    >
       {metaBadge(msg.meta) && (
-        <div style={{
-          fontSize: T.micro.size,
-          color: isUser ? C.muted2 : C.muted2,
-          marginBottom: S.xs,
-          fontWeight: T.micro.weight,
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          opacity: 0.7,
-        }}>
+        <div
+          style={{
+            fontSize: tokens.type.micro.size,
+            color: tokens.colors.muted,
+            marginBottom: tokens.spacing.xs,
+            fontWeight: tokens.type.micro.weight,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            opacity: 0.75,
+          }}
+        >
           {metaBadge(msg.meta)}
         </div>
       )}
@@ -238,22 +302,33 @@ function TabButton({ active, label, onClick }: { active: boolean; label: string;
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       style={{
-        background: active ? C.accent : C.white,
-        color: active ? C.white : C.ink,
+        background: active ? tokens.colors.accent : tokens.colors.white,
+        color: active ? tokens.colors.white : tokens.colors.ink,
         border: active ? 'none' : '1px solid',
-        borderColor: active ? C.accent : C.hairline,
-        padding: `${(S.sm - 2)}px ${S.md}px`,
-        borderRadius: R.pill,
+        borderColor: active ? tokens.colors.accent : tokens.colors.hairline,
+        padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+        borderRadius: tokens.radius.pill,
         cursor: 'pointer',
-        fontSize: T.utility.size,
-        fontWeight: active ? T.utility.weight : T.utility.weight,
+        fontSize: tokens.type.utility.size,
+        fontWeight: 500,
         textTransform: 'none',
-        letterSpacing: T.utility.tracking,
-        fontFamily: F.family,
+        letterSpacing: tokens.type.utility.tracking,
+        fontFamily: tokens.fonts.family,
         lineHeight: 1.29,
-        transition: 'background 120ms ease, border-color 120ms ease',
-        boxShadow: active ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+        transition: 'background 150ms ease, border-color 150ms ease, box-shadow 150ms ease',
+        boxShadow: active ? tokens.shadows.button : 'none',
+        outline: 'none',
+      }}
+      onFocus={(e) => {
+        if (active) {
+          e.currentTarget.style.outline = `2px solid ${tokens.colors.accentFocus}`
+          e.currentTarget.style.outlineOffset = '2px'
+        }
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.outline = 'none'
       }}
     >
       {label}
@@ -264,28 +339,48 @@ function TabButton({ active, label, onClick }: { active: boolean; label: string;
 // ---------- 상태 배지 ----------
 function StatusBadge({ status }: { status: PlanData['status'] }) {
   const map = {
-    준비중: { bg: C.parchment, color: C.ink, label: '준비중' },
-    접수완료: { bg: '#fff4e5', color: '#b85c00', label: '접수완료' },
-    응시완료: { bg: '#e8f0fe', color: C.accent, label: '응시완료' },
-    합격: { bg: '#e8f5e9', color: '#1b7a3d', label: '합격' },
-    불합격: { bg: '#fde8e8', color: '#c0392b', label: '불합격' },
+    준비중: { bg: tokens.colors.parchment, color: tokens.colors.ink, label: '준비중' },
+    접수완료: { bg: tokens.colors.warningBg, color: tokens.colors.warningDark, label: '접수완료' },
+    응시완료: { bg: tokens.colors.accentBg, color: tokens.colors.accent, label: '응시완료' },
+    합격: { bg: tokens.colors.successBg, color: tokens.colors.successDark, label: '합격' },
+    불합격: { bg: tokens.colors.dangerBg, color: tokens.colors.danger, label: '불합격' },
   }
   const s = map[status]
   return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: `${S.xxs}px ${S.sm}px`,
-      background: s.bg,
-      color: s.color,
-      borderRadius: R.pill,
-      fontSize: T.captionStrong.size,
-      fontWeight: T.captionStrong.weight,
-      fontFamily: F.family,
-      letterSpacing: T.captionStrong.tracking,
-      textTransform: 'uppercase',
-    }}>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: `${tokens.spacing.xxs}px ${tokens.spacing.sm}px`,
+        background: s.bg,
+        color: s.color,
+        borderRadius: tokens.radius.pill,
+        fontSize: tokens.type.captionStrong.size,
+        fontWeight: tokens.type.captionStrong.weight,
+        fontFamily: tokens.fonts.family,
+        letterSpacing: tokens.type.captionStrong.tracking,
+        textTransform: 'uppercase',
+      }}
+    >
       {s.label}
+    </span>
+  )
+}
+
+// ---------- 오버라인 (섹션 레이블) ----------
+function Overline({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <span
+      style={{
+        fontSize: tokens.type.overline.size,
+        fontWeight: 600,
+        color: tokens.colors.accent,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        ...style,
+      }}
+    >
+      {children}
     </span>
   )
 }
@@ -293,50 +388,64 @@ function StatusBadge({ status }: { status: PlanData['status'] }) {
 // ---------- 카드 ----------
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{
-      background: C.white,
-      borderRadius: R.lg,
-      padding: S.lg,
-      boxShadow: SH.card,
-      border: '1px solid',
-      borderColor: C.hairline,
-      ...style,
-    }}>
+    <div
+      style={{
+        background: tokens.colors.white,
+        borderRadius: tokens.radius.lg,
+        padding: tokens.spacing.lg,
+        boxShadow: tokens.shadows.card,
+        border: '1px solid',
+        borderColor: tokens.colors.hairline,
+        ...style,
+      }}
+    >
       {children}
     </div>
   )
 }
 
-function CardHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+// ---------- 카드 헤더 ----------
+function CardHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: S.md }}>
-      <h2 style={{
-        fontSize: T.h3.size,
-        fontWeight: T.h3.weight,
-        color: C.ink,
-        fontFamily: F.family,
-        letterSpacing: T.h3.tracking,
-        margin: 0,
-        lineHeight: T.h3.lh,
-      }}>
-        {title}
-      </h2>
-      {subtitle && (
-        <p style={{
-          fontSize: T.small.size,
-          color: C.muted2,
-          margin: `${S.xs}px 0 0`,
-          fontFamily: F.family,
-          letterSpacing: T.small.tracking,
-        }}>
-          {subtitle}
-        </p>
-      )}
+    <div style={{ marginBottom: tokens.spacing.md }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: tokens.spacing.sm }}>
+        <div>
+          <h2
+            style={{
+              fontSize: tokens.type.h3.size,
+              fontWeight: tokens.type.h3.weight,
+              color: tokens.colors.ink,
+              fontFamily: tokens.fonts.display,
+              letterSpacing: tokens.type.h3.tracking,
+              margin: 0,
+              lineHeight: tokens.type.h3.lh,
+            }}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p
+              style={{
+                fontSize: tokens.type.small.size,
+                color: tokens.colors.muted,
+                margin: `${tokens.spacing.xs}px 0 0`,
+                fontFamily: tokens.fonts.family,
+                letterSpacing: tokens.type.small.tracking,
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {action && <div>{action}</div>}
+      </div>
     </div>
   )
 }
 
-// ---------- 캘린더 위젯 ----------
+// ============================================================
+//  캘린더 위젯 (Apple Calendar 스타일)
+// ============================================================
 function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
   const today = new Date()
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -352,10 +461,21 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
 
   const isToday = (year: number, month: number, day: number) =>
     year === today.getFullYear() && month === today.getMonth() && day === today.getDate()
+
   const isExamDay = (year: number, month: number, day: number) =>
     examDate && year === examDate.getFullYear() && month === examDate.getMonth() && day === examDate.getDate()
 
   const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) }
+    else setViewMonth(m => m - 1)
+  }
+
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) }
+    else setViewMonth(m => m + 1)
+  }
 
   return (
     <Card>
@@ -365,103 +485,120 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
       />
 
       {schedule ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: S.md }}>
-          {/* 월 그리드 */}
-          <div>
-            {/* 월 헤더 */}
-            <div style={{
+        <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
+          {/* 월 네비게이션 */}
+          <div
+            style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: S.sm,
-            }}>
-              <button
-                onClick={() => {
-                  if (viewMonth === 0) { setViewYear(v => v - 1); setViewMonth(11) }
-                  else setViewMonth(m => m - 1)
-                }}
-                style={{
-                  width: 32, height: 32,
-                  background: C.parchment,
-                  border: 'none',
-                  borderRadius: R.pill,
-                  cursor: 'pointer',
-                  fontSize: T.caption.size,
-                  color: C.ink,
-                  fontFamily: F.family,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: 'none',
-                }}
-                title="이전 달"
-              >
-                ‹
-              </button>
-              <span style={{
-                fontSize: T.bodyStrong.size,
-                fontWeight: T.bodyStrong.weight,
-                color: C.ink,
-                fontFamily: F.display,
-                letterSpacing: T.bodyStrong.tracking,
-              }}>
-                {monthLabel}
-              </span>
-              <button
-                onClick={() => {
-                  if (viewMonth === 11) { setViewYear(v => v + 1); setViewMonth(0) }
-                  else setViewMonth(m => m + 1)
-                }}
-                style={{
-                  width: 32, height: 32,
-                  background: C.parchment,
-                  border: 'none',
-                  borderRadius: R.pill,
-                  cursor: 'pointer',
-                  fontSize: T.caption.size,
-                  color: C.ink,
-                  fontFamily: F.family,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                title="다음 달"
-              >
-                ›
-              </button>
-            </div>
+              marginBottom: tokens.spacing.sm,
+            }}
+          >
+            <button
+              onClick={prevMonth}
+              aria-label="이전 달"
+              style={{
+                width: 34,
+                height: 34,
+                background: tokens.colors.parchment,
+                border: 'none',
+                borderRadius: tokens.radius.pill,
+                cursor: 'pointer',
+                fontSize: tokens.type.caption.size,
+                color: tokens.colors.ink,
+                fontFamily: tokens.fonts.family,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = tokens.colors.parchmentStrong }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = tokens.colors.parchment }}
+            >
+              {'‹'}
+            </button>
+            <span
+              style={{
+                fontSize: tokens.type.bodyStrong.size,
+                fontWeight: tokens.type.bodyStrong.weight,
+                color: tokens.colors.ink,
+                fontFamily: tokens.fonts.display,
+                letterSpacing: tokens.type.bodyStrong.tracking,
+              }}
+            >
+              {monthLabel}
+            </span>
+            <button
+              onClick={nextMonth}
+              aria-label="다음 달"
+              style={{
+                width: 34,
+                height: 34,
+                background: tokens.colors.parchment,
+                border: 'none',
+                borderRadius: tokens.radius.pill,
+                cursor: 'pointer',
+                fontSize: tokens.type.caption.size,
+                color: tokens.colors.ink,
+                fontFamily: tokens.fonts.family,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = tokens.colors.parchmentStrong }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = tokens.colors.parchment }}
+            >
+              {'›'}
+            </button>
+          </div>
 
+          {/* 캘린더 그리드 */}
+          <div style={{ userSelect: 'none' }}>
             {/* 요일 헤더 */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
-              gap: 2,
-              marginBottom: S.xs,
-            }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: 2,
+                marginBottom: tokens.spacing.xs,
+              }}
+            >
               {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-                <div key={d} style={{
-                  textAlign: 'center',
-                  fontSize: T.small.size,
-                  fontWeight: T.smallStrong.weight,
-                  color: C.muted2,
-                  fontFamily: F.family,
-                  padding: S.xs,
-                  letterSpacing: T.small.tracking,
-                }}>
+                <div
+                  key={d}
+                  style={{
+                    textAlign: 'center',
+                    fontSize: tokens.type.small.size,
+                    fontWeight: tokens.type.smallStrong.weight,
+                    color: tokens.colors.muted,
+                    fontFamily: tokens.fonts.family,
+                    padding: tokens.spacing.xs,
+                    letterSpacing: tokens.type.small.tracking,
+                  }}
+                >
                   {d}
                 </div>
               ))}
             </div>
 
             {/* 날짜 그리드 */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
-              gap: 2,
-            }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: 2,
+                backgroundColor: tokens.colors.white,
+                borderRadius: tokens.radius.md,
+                border: '1px solid',
+                borderColor: tokens.colors.hairline,
+                padding: tokens.spacing.xs,
+              }}
+            >
               {cells.map((day, idx) => {
                 if (day === null) {
-                  return <div key={`e${idx}`} style={{ aspectRatio: '1' }} />
+                  return <div key={`e${idx}`} style={{ aspectRatio: '1', borderRadius: tokens.radius.sm }} />
                 }
                 const isTodayCell = isToday(viewYear, viewMonth, day)
                 const isExam = isExamDay(viewYear, viewMonth, day)
@@ -477,27 +614,51 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderRadius: R.sm,
-                      background: isTodayCell ? C.accent : 'transparent',
-                      color: isTodayCell ? C.white : (isOutside ? C.muted3 : C.ink),
-                      fontSize: T.caption.size,
-                      fontWeight: (isTodayCell || isExam) ? T.captionStrong.weight : T.caption.weight,
-                      fontFamily: F.family,
-                      letterSpacing: T.caption.tracking,
+                      borderRadius: tokens.radius.sm,
+                      background: isTodayCell
+                        ? (isExam ? tokens.colors.danger : tokens.colors.accent)
+                        : isOutside
+                          ? 'transparent'
+                          : 'transparent',
+                      color: isTodayCell
+                        ? tokens.colors.white
+                        : isOutside
+                          ? tokens.colors.mutedLight
+                          : tokens.colors.ink,
+                      fontSize: tokens.type.caption.size,
+                      fontWeight: (isTodayCell || isExam) ? tokens.type.captionStrong.weight : tokens.type.caption.weight,
+                      fontFamily: tokens.fonts.family,
+                      letterSpacing: tokens.type.caption.tracking,
                       cursor: 'default',
                       position: 'relative',
-                      transition: 'background 120ms ease',
+                      transition: 'background 150ms ease, transform 150ms ease',
                     }}
                   >
                     <span>{day}</span>
-                    {isExam && (
-                      <span style={{
-                        width: 5, height: 5,
-                        background: isTodayCell ? C.white : C.accent,
-                        borderRadius: R.pill,
-                        marginTop: 1,
-                        display: 'block',
-                      }} />
+                    {isExam && !isTodayCell && (
+                      <span
+                        style={{
+                          width: 4,
+                          height: 4,
+                          background: tokens.colors.accent,
+                          borderRadius: tokens.radius.pill,
+                          marginTop: 1,
+                          display: 'block',
+                        }}
+                      />
+                    )}
+                    {isTodayCell && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          bottom: 2,
+                          width: 4,
+                          height: 4,
+                          background: tokens.colors.white,
+                          borderRadius: tokens.radius.pill,
+                          opacity: isExam ? 0 : 0.7,
+                        }}
+                      />
                     )}
                   </div>
                 )
@@ -507,31 +668,37 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
 
           {/* 시험일 하이라이트 */}
           {examDate && (
-            <div style={{
-              padding: `${S.sm}px ${S.md}px`,
-              background: '#e8f0fe',
-              borderRadius: R.md,
-              border: '1px solid',
-              borderColor: '#b3d4fc',
-            }}>
-              <div style={{
-                fontSize: T.smallStrong.size,
-                fontWeight: T.smallStrong.weight,
-                color: C.accent,
-                fontFamily: F.family,
-                letterSpacing: T.smallStrong.tracking,
-                textTransform: 'uppercase',
-                marginBottom: S.xs,
-              }}>
+            <div
+              style={{
+                padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+                background: tokens.colors.accentBg,
+                borderRadius: tokens.radius.md,
+                border: '1px solid',
+                borderColor: tokens.colors.accentLight,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: tokens.type.smallStrong.size,
+                  fontWeight: tokens.type.smallStrong.weight,
+                  color: tokens.colors.accent,
+                  fontFamily: tokens.fonts.family,
+                  letterSpacing: tokens.type.smallStrong.tracking,
+                  textTransform: 'uppercase',
+                  marginBottom: tokens.spacing.xs,
+                }}
+              >
                 시험 예정일
               </div>
-              <div style={{
-                fontSize: T.bodyStrong.size,
-                fontWeight: T.bodyStrong.weight,
-                color: C.ink,
-                fontFamily: F.family,
-                letterSpacing: T.bodyStrong.tracking,
-              }}>
+              <div
+                style={{
+                  fontSize: tokens.type.bodyStrong.size,
+                  fontWeight: tokens.type.bodyStrong.weight,
+                  color: tokens.colors.ink,
+                  fontFamily: tokens.fonts.family,
+                  letterSpacing: tokens.type.bodyStrong.tracking,
+                }}
+              >
                 {examDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
               </div>
             </div>
@@ -540,146 +707,203 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
           {/* 일정 항목 목록 */}
           {schedule.items.length > 0 && (
             <div>
-              <div style={{
-                fontSize: T.smallStrong.size,
-                fontWeight: T.smallStrong.weight,
-                color: C.muted,
-                fontFamily: F.family,
-                letterSpacing: T.smallStrong.tracking,
-                textTransform: 'uppercase',
-                marginBottom: S.xs,
-              }}>
+              <div
+                style={{
+                  fontSize: tokens.type.smallStrong.size,
+                  fontWeight: tokens.type.smallStrong.weight,
+                  color: tokens.colors.inkLight,
+                  fontFamily: tokens.fonts.family,
+                  letterSpacing: tokens.type.smallStrong.tracking,
+                  textTransform: 'uppercase',
+                  marginBottom: tokens.spacing.xs,
+                }}
+              >
                 상세 정보
               </div>
-              {schedule.items.map((it, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: `${S.xs}px ${S.sm}px`,
-                    background: C.parchment,
-                    borderRadius: R.sm,
-                    marginBottom: S.xs,
-                  }}
-                >
-                  <div style={{
-                    fontSize: T.captionStrong.size,
-                    fontWeight: T.captionStrong.weight,
-                    color: C.ink,
-                    fontFamily: F.family,
-                    letterSpacing: T.captionStrong.tracking,
-                  }}>
-                    {it.label}
-                  </div>
-                  <div style={{
-                    fontSize: T.caption.size,
-                    color: C.muted,
-                    fontFamily: F.family,
-                    letterSpacing: T.caption.tracking,
-                    marginTop: 2,
-                  }}>
-                    {it.value}
-                  </div>
-                  {it.source && (
-                    <div style={{
-                      fontSize: T.micro.size,
-                      color: C.muted2,
-                      fontFamily: F.family,
-                      letterSpacing: T.micro.tracking,
-                      marginTop: S.xxs,
-                      opacity: 0.8,
-                    }}>
-                      출처: {it.source}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.xs }}>
+                {schedule.items.map((it, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                      background: tokens.colors.parchment,
+                      borderRadius: tokens.radius.sm,
+                      transition: 'background 150ms ease',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: tokens.type.captionStrong.size,
+                        fontWeight: tokens.type.captionStrong.weight,
+                        color: tokens.colors.ink,
+                        fontFamily: tokens.fonts.family,
+                        letterSpacing: tokens.type.captionStrong.tracking,
+                      }}
+                    >
+                      {it.label}
                     </div>
-                  )}
-                  {it.note && (
-                    <div style={{
-                      fontSize: T.micro.size,
-                      color: C.danger,
-                      fontFamily: F.family,
-                      fontWeight: 600,
-                      letterSpacing: T.micro.tracking,
-                      marginTop: S.xxs,
-                    }}>
-                      {it.note}
+                    <div
+                      style={{
+                        fontSize: tokens.type.caption.size,
+                        color: tokens.colors.inkLight,
+                        fontFamily: tokens.fonts.family,
+                        letterSpacing: tokens.type.caption.tracking,
+                        marginTop: 2,
+                      }}
+                    >
+                      {it.value}
                     </div>
-                  )}
-                </div>
-              ))}
+                    {it.source && (
+                      <div
+                        style={{
+                          fontSize: tokens.type.micro.size,
+                          color: tokens.colors.muted,
+                          fontFamily: tokens.fonts.family,
+                          letterSpacing: tokens.type.micro.tracking,
+                          marginTop: tokens.spacing.xxs,
+                          opacity: 0.8,
+                        }}
+                      >
+                        출처: {it.source}
+                      </div>
+                    )}
+                    {it.note && (
+                      <div
+                        style={{
+                          fontSize: tokens.type.micro.size,
+                          color: tokens.colors.danger,
+                          fontFamily: tokens.fonts.family,
+                          fontWeight: 600,
+                          letterSpacing: tokens.type.micro.tracking,
+                          marginTop: tokens.spacing.xxs,
+                        }}
+                      >
+                        {it.note}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {/* 캘린더 등록 동의 영역 */}
           {schedule && (
-            <div style={{ marginTop: S.sm }}>
-              <p style={{
-                fontSize: T.small.size,
-                color: C.muted,
-                fontFamily: F.family,
-                letterSpacing: T.small.tracking,
+            <p
+              style={{
+                fontSize: tokens.type.small.size,
+                color: tokens.colors.inkLight,
+                fontFamily: tokens.fonts.family,
+                letterSpacing: tokens.type.small.tracking,
                 lineHeight: 1.5,
                 margin: 0,
-              }}>
-                Google Calendar에 시험 일정을 등록할 수 있어요. 동의하면 연결돼요.
-              </p>
-            </div>
+              }}
+            >
+              Google Calendar에 시험 일정을 등록할 수 있어요. 동의하면 연결돼요.
+            </p>
           )}
         </div>
       ) : (
-        <div style={{
-          padding: `${S.xl}px ${S.lg}px`,
-          textAlign: 'center',
-          color: C.muted2,
-          fontFamily: F.family,
-          fontSize: T.body.size,
-          lineHeight: T.body.lh,
-        }}>
-          <div style={{
-            fontSize: T.h3.size,
-            fontWeight: T.h3.weight,
-            color: C.ink,
-            fontFamily: F.display,
-            letterSpacing: T.h3.tracking,
-            marginBottom: S.sm,
-          }}>
-            아직 일정이 없어요
-          </div>
-          <p style={{ margin: 0 }}>
-            대화에서 <span style={{ color: C.accent, fontWeight: 500 }}>"정보처리기사 일정 알려줘"</span>처럼
-            물어보면 공식 일정을 가져와서 여기에 표시해요.
-          </p>
-          <div style={{
-            marginTop: S.md,
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: S.xs,
-            justifyContent: 'center',
-          }}>
-            {['정보처리기사 시험 일정 알려줘', 'SQLD 응시료랑 접수 일정 알려줘', '컴활 1급 시험일 언제야'].map(q => (
-              <span
-                key={q}
-                style={{
-                  padding: `${S.xs}px ${S.sm}px`,
-                  background: C.parchment,
-                  borderRadius: R.pill,
-                  fontSize: T.caption.size,
-                  color: C.ink,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                  border: '1px solid',
-                  borderColor: C.hairline,
-                }}
-              >
-                {q}
-              </span>
-            ))}
-          </div>
-        </div>
+        <EmptyCalendar />
       )}
     </Card>
   )
 }
 
-// ---------- 계획 위젯 ----------
+// ---------- 캘린더 빈 상태 ----------
+function EmptyCalendar() {
+  return (
+    <div
+      style={{
+        padding: `${tokens.spacing.xl}px ${tokens.spacing.lg}px`,
+        textAlign: 'center',
+        color: tokens.colors.muted,
+        fontFamily: tokens.fonts.family,
+        fontSize: tokens.type.body.size,
+        lineHeight: tokens.type.body.lh,
+      }}
+    >
+      <div
+        style={{
+          fontSize: tokens.type.h3.size,
+          fontWeight: tokens.type.h3.weight,
+          color: tokens.colors.ink,
+          fontFamily: tokens.fonts.display,
+          letterSpacing: tokens.type.h3.tracking,
+          marginBottom: tokens.spacing.sm,
+        }}
+      >
+        아직 일정이 없어요
+      </div>
+      <p style={{ margin: 0 }}>
+        대화에서{' '}
+        <InlineAccent>"정보처리기사 일정 알려줘"</InlineAccent>처럼
+        물어보면 공식 일정을 가져와서 여기에 표시해요.
+      </p>
+      <ExampleChips
+        items={[
+          '정보처리기사 시험 일정 알려줘',
+          'SQLD 응시료랑 접수 일정 알려줘',
+          '컴활 1급 시험일 언제야',
+        ]}
+      />
+    </div>
+  )
+}
+
+// ---------- 인라인 액센트 텍스트 ----------
+function InlineAccent({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      style={{
+        color: tokens.colors.accent,
+        fontWeight: 500,
+        borderBottom: '1px solid',
+        borderColor: tokens.colors.accentLight,
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+// ---------- 예시 칩 ----------
+function ExampleChips({ items }: { items: string[] }) {
+  return (
+    <div
+      style={{
+        marginTop: tokens.spacing.md,
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: tokens.spacing.xs,
+        justifyContent: 'center',
+      }}
+    >
+      {items.map(q => (
+        <span
+          key={q}
+          style={{
+            padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+            background: tokens.colors.parchment,
+            borderRadius: tokens.radius.pill,
+            fontSize: tokens.type.caption.size,
+            color: tokens.colors.ink,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.caption.tracking,
+            border: '1px solid',
+            borderColor: tokens.colors.hairline,
+          }}
+        >
+          {q}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+// ============================================================
+//  계획 위젯 (Apple 스타일 타임라인)
+// ============================================================
 function PlanWidget({ plan }: { plan: PlanData | null }) {
   if (!plan) {
     return (
@@ -688,55 +912,40 @@ function PlanWidget({ plan }: { plan: PlanData | null }) {
           title="학습 계획"
           subtitle="추천받은 자격증에 대해 '준비 시작할래'라고 말하면 만들어드려요"
         />
-        <div style={{
-          padding: `${S.xl}px ${S.lg}px`,
-          textAlign: 'center',
-          color: C.muted2,
-          fontFamily: F.family,
-          fontSize: T.body.size,
-          lineHeight: T.body.lh,
-        }}>
-          <div style={{
-            fontSize: T.h3.size,
-            fontWeight: T.h3.weight,
-            color: C.ink,
-            fontFamily: F.display,
-            letterSpacing: T.h3.tracking,
-            marginBottom: S.sm,
-          }}>
+        <div
+          style={{
+            padding: `${tokens.spacing.xl}px ${tokens.spacing.lg}px`,
+            textAlign: 'center',
+            color: tokens.colors.muted,
+            fontFamily: tokens.fonts.family,
+            fontSize: tokens.type.body.size,
+            lineHeight: tokens.type.body.lh,
+          }}
+        >
+          <div
+            style={{
+              fontSize: tokens.type.h3.size,
+              fontWeight: tokens.type.h3.weight,
+              color: tokens.colors.ink,
+              fontFamily: tokens.fonts.display,
+              letterSpacing: tokens.type.h3.tracking,
+              marginBottom: tokens.spacing.sm,
+            }}
+          >
             계획이 아직 없어요
           </div>
           <p style={{ margin: 0 }}>
-            자격증 추천을 받은 뒤{" "}
-            <span style={{ color: C.accent, fontWeight: 500 }}>"정보처리기사 준비 시작할래"</span>라고 말하면
+            자격증 추천을 받은 뒤{' '}
+            <InlineAccent>"정보처리기사 준비 시작할래"</InlineAccent>라고 말하면
             주차별 계획이 만들어져요.
           </p>
-          <div style={{
-            marginTop: S.md,
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: S.xs,
-            justifyContent: 'center',
-          }}>
-            {['주 5시간으로 시험일까지 계획 세워줘', '오늘 뭐 공부해?', '계획 줄여줘'].map(q => (
-              <span
-                key={q}
-                style={{
-                  padding: `${S.xs}px ${S.sm}px`,
-                  background: C.parchment,
-                  borderRadius: R.pill,
-                  fontSize: T.caption.size,
-                  color: C.ink,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                  border: '1px solid',
-                  borderColor: C.hairline,
-                }}
-              >
-                {q}
-              </span>
-            ))}
-          </div>
+          <ExampleChips
+            items={[
+              '주 5시간으로 시험일까지 계획 세워줘',
+              '오늘 뭐 공부해?',
+              '계획 줄여줘',
+            ]}
+          />
         </div>
       </Card>
     )
@@ -748,223 +957,244 @@ function PlanWidget({ plan }: { plan: PlanData | null }) {
   return (
     <Card style={{ padding: 0, overflow: 'hidden' }}>
       {/* 헤더 */}
-      <div style={{
-        padding: S.lg,
-        borderBottom: '1px solid',
-        borderColor: C.hairline,
-        background: C.parchment,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: S.md }}>
-          <div style={{ flex: 1 }}>
-            <div style={{
-              fontSize: T.h3.size,
-              fontWeight: T.h3.weight,
-              color: C.ink,
-              fontFamily: F.display,
-              letterSpacing: T.h3.tracking,
-              marginBottom: S.xs,
-            }}>
+      <div
+        style={{
+          padding: tokens.spacing.lg,
+          borderBottom: '1px solid',
+          borderColor: tokens.colors.hairline,
+          background: tokens.colors.parchment,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: tokens.spacing.md }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: tokens.type.h3.size,
+                fontWeight: tokens.type.h3.weight,
+                color: tokens.colors.ink,
+                fontFamily: tokens.fonts.display,
+                letterSpacing: tokens.type.h3.tracking,
+                marginBottom: tokens.spacing.xs,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {plan.qualification}
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: S.sm, alignItems: 'center' }}>
-              <span style={{
-                fontSize: T.caption.size,
-                color: C.muted,
-                fontFamily: F.family,
-                letterSpacing: T.caption.tracking,
-              }}>
-                시험일
-              </span>
-              <span style={{
-                fontSize: T.bodyStrong.size,
-                fontWeight: T.bodyStrong.weight,
-                color: C.ink,
-                fontFamily: F.family,
-                letterSpacing: T.bodyStrong.tracking,
-              }}>
-                {plan.examDate}
-              </span>
-              <span style={{
-                fontSize: T.caption.size,
-                color: C.muted,
-                fontFamily: F.family,
-                letterSpacing: T.caption.tracking,
-              }}>
-                · 총 {plan.totalWeeks}주
-              </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: tokens.spacing.sm, alignItems: 'center' }}>
+              <MetaInline label="시험일" value={plan.examDate} />
+              <MetaInline label="총 기간" value={`${plan.totalWeeks}주`} />
               <StatusBadge status={plan.status} />
             </div>
           </div>
-          {/* 전체 진행률 */}
-          <div style={{ minWidth: 120, textAlign: 'right' }}>
-            <div style={{
-              fontSize: T.smallStrong.size,
-                fontWeight: T.smallStrong.weight,
-                color: C.muted,
-                fontFamily: F.family,
-                letterSpacing: T.smallStrong.tracking,
-                marginBottom: S.xs,
-              }}>
-                진행 {doneCount}/{plan.totalWeeks}주
-              </div>
-            <div style={{
-              height: 6,
-              background: C.hairline,
-              borderRadius: R.pill,
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${progress}%`,
-                background: progress >= 100 ? C.success : C.accent,
-                borderRadius: R.pill,
-                transition: 'width 300ms ease',
-              }} />
+          {/* 진행률 */}
+          <div style={{ minWidth: 130, textAlign: 'right' }}>
+            <div
+              style={{
+                fontSize: tokens.type.smallStrong.size,
+                fontWeight: tokens.type.smallStrong.weight,
+                color: tokens.colors.muted,
+                fontFamily: tokens.fonts.family,
+                letterSpacing: tokens.type.smallStrong.tracking,
+                marginBottom: tokens.spacing.xs,
+              }}
+            >
+              진행 {doneCount}/{plan.totalWeeks}주
+            </div>
+            <div
+              style={{
+                height: 6,
+                background: tokens.colors.hairline,
+                borderRadius: tokens.radius.pill,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${progress}%`,
+                  background: progress >= 100 ? tokens.colors.success : tokens.colors.accent,
+                  borderRadius: tokens.radius.pill,
+                  transition: 'width 400ms cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* 주차 목록 */}
-      <div style={{ padding: S.lg }}>
-        <div style={{
-          fontSize: T.smallStrong.size,
-          fontWeight: T.smallStrong.weight,
-          color: C.muted,
-          fontFamily: F.family,
-          letterSpacing: T.smallStrong.tracking,
-          textTransform: 'uppercase',
-          marginBottom: S.sm,
-        }}>
-          주차별 계획
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: S.xs }}>
+      {/* 주차 목록 (타임라인) */}
+      <div style={{ padding: tokens.spacing.lg }}>
+        <Overline style={{ marginBottom: tokens.spacing.sm }}>주차별 계획</Overline>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.xs }}>
           {plan.weeks.map(w => (
             <div
               key={w.week}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: S.md,
-                padding: `${S.sm}px ${S.md}px`,
-                background: w.done ? '#f0f7ec' : C.parchment,
-                borderRadius: R.md,
+                gap: tokens.spacing.md,
+                padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+                background: w.done ? tokens.colors.successBg : tokens.colors.parchment,
+                borderRadius: tokens.radius.md,
                 border: '1px solid',
-                borderColor: w.done ? '#d4e8c8' : C.hairline,
+                borderColor: w.done ? tokens.colors.successBorder : tokens.colors.hairline,
+                transition: 'background 200ms ease, border-color 200ms ease',
               }}
             >
-              {/* 주차 번호 */}
-              <div style={{
-                minWidth: 56,
-                fontSize: T.captionStrong.size,
-                fontWeight: T.captionStrong.weight,
-                color: w.done ? '#1b7a3d' : C.ink,
-                fontFamily: F.family,
-                letterSpacing: T.captionStrong.tracking,
-              }}>
+              {/* 주차 번호 배지 */}
+              <div
+                style={{
+                  minWidth: 52,
+                  padding: `${tokens.spacing.xxs}px ${tokens.spacing.xs}px`,
+                  background: w.done ? tokens.colors.success : tokens.colors.accentBg,
+                  borderRadius: tokens.radius.sm,
+                  fontSize: tokens.type.captionStrong.size,
+                  fontWeight: tokens.type.captionStrong.weight,
+                  color: w.done ? tokens.colors.white : tokens.colors.accent,
+                  fontFamily: tokens.fonts.family,
+                  letterSpacing: tokens.type.captionStrong.tracking,
+                  textAlign: 'center',
+                }}
+              >
                 {w.week}주차
               </div>
 
-              {/*포커스 */}
-              <div style={{ flex: 1 }}>
-                <div style={{
-                  fontSize: T.caption.size,
-                  color: C.ink,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                  fontWeight: 500,
-                }}>
+              {/* 포커스 */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: tokens.type.caption.size,
+                    color: tokens.colors.ink,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.caption.tracking,
+                    fontWeight: 500,
+                  }}
+                >
                   {w.focus}
                 </div>
               </div>
 
               {/* 권장 시간 */}
-              <div style={{
-                minWidth: 60,
-                textAlign: 'right',
-                fontSize: T.caption.size,
-                color: C.muted,
-                fontFamily: F.family,
-                letterSpacing: T.caption.tracking,
-              }}>
+              <div
+                style={{
+                  minWidth: 56,
+                  textAlign: 'right',
+                  fontSize: tokens.type.caption.size,
+                  color: tokens.colors.muted,
+                  fontFamily: tokens.fonts.family,
+                  letterSpacing: tokens.type.caption.tracking,
+                }}
+              >
                 {w.hours}
               </div>
 
               {/* 완료 체크 */}
-              <div style={{
-                width: 24, height: 24,
-                borderRadius: R.pill,
-                background: w.done ? C.success : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: T.caption.size,
-                fontWeight: T.captionStrong.weight,
-                color: w.done ? C.white : C.muted2,
-                fontFamily: F.family,
-                letterSpacing: T.captionStrong.tracking,
-                border: w.done ? 'none' : '1.5px solid',
-                borderColor: w.done ? C.success : C.hairline,
-              }}>
-                {w.done ? '✓' : ''}
+              <div
+                role="checkbox"
+                aria-checked={w.done}
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: tokens.radius.pill,
+                  background: w.done
+                    ? 'linear-gradient(135deg, #34c759, #28a745)'
+                    : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: tokens.type.caption.size,
+                  fontWeight: tokens.type.captionStrong.weight,
+                  color: w.done ? tokens.colors.white : tokens.colors.mutedLight,
+                  fontFamily: tokens.fonts.family,
+                  letterSpacing: tokens.type.captionStrong.tracking,
+                  border: w.done ? 'none' : '1.5px solid',
+                  borderColor: w.done ? tokens.colors.success : tokens.colors.hairline,
+                  cursor: 'pointer',
+                  transition: 'all 200ms ease',
+                  boxShadow: w.done ? '0 1px 3px rgba(52,199,89,0.3)' : 'none',
+                }}
+              >
+                {w.done ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                )}
               </div>
             </div>
           ))}
         </div>
 
         {/* 오늘 브리핑 */}
-        <div style={{
-          marginTop: S.md,
-          padding: S.md,
-          background: C.accent,
-          borderRadius: R.md,
-          color: C.white,
-        }}>
-          <div style={{
-            fontSize: T.smallStrong.size,
-            fontWeight: T.smallStrong.weight,
-            fontFamily: F.family,
-            letterSpacing: T.smallStrong.tracking,
-            textTransform: 'uppercase',
-            marginBottom: S.xs,
-            opacity: 0.9,
-          }}>
+        <div
+          style={{
+            marginTop: tokens.spacing.md,
+            padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
+            background: 'linear-gradient(135deg, #0066cc, #0052a3)',
+            borderRadius: tokens.radius.md,
+            color: tokens.colors.white,
+            boxShadow: '0 2px 8px rgba(0,102,204,0.25)',
+          }}
+        >
+          <div
+            style={{
+              fontSize: tokens.type.smallStrong.size,
+              fontWeight: tokens.type.smallStrong.weight,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.smallStrong.tracking,
+              textTransform: 'uppercase',
+              marginBottom: tokens.spacing.xs,
+              opacity: 0.9,
+            }}
+          >
             오늘 브리핑
           </div>
-          <div style={{
-            fontSize: T.bodyStrong.size,
-            fontWeight: T.bodyStrong.weight,
-            fontFamily: F.family,
-            letterSpacing: T.bodyStrong.tracking,
-            lineHeight: 1.4,
-          }}>
+          <div
+            style={{
+              fontSize: tokens.type.bodyStrong.size,
+              fontWeight: tokens.type.bodyStrong.weight,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.bodyStrong.tracking,
+              lineHeight: 1.4,
+            }}
+          >
             {plan.briefing.task}
             <br />
-            <span style={{
-              fontSize: T.caption.size,
-              fontWeight: T.caption.weight,
-              opacity: 0.85,
-              display: 'block',
-              marginTop: S.xs,
-            }}>
+            <span
+              style={{
+                fontSize: tokens.type.caption.size,
+                fontWeight: tokens.type.caption.weight,
+                opacity: 0.85,
+                display: 'block',
+                marginTop: tokens.spacing.xs,
+              }}
+            >
               가장 가까운 마감: {plan.briefing.deadline}
             </span>
           </div>
         </div>
 
-        <div style={{
-          marginTop: S.md,
-          fontSize: T.small.size,
-          color: C.muted2,
-          fontFamily: F.family,
-          letterSpacing: T.small.tracking,
-          lineHeight: 1.5,
-          padding: `${S.sm}px ${S.md}px`,
-          background: C.parchment,
-          borderRadius: R.sm,
-          border: '1px solid',
-          borderColor: C.hairline,
-        }}>
+        <div
+          style={{
+            marginTop: tokens.spacing.md,
+            fontSize: tokens.type.small.size,
+            color: tokens.colors.muted,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.small.tracking,
+            lineHeight: 1.5,
+            padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+            background: tokens.colors.parchment,
+            borderRadius: tokens.radius.sm,
+            border: '1px solid',
+            borderColor: tokens.colors.hairline,
+          }}
+        >
           지연 3일 이상 또는 주당 가용시간 50% 초과 시 재조정돼요.
           <br />
           3일 연속 미완료 시 계획 축소 안내가 나가요.
@@ -974,8 +1204,39 @@ function PlanWidget({ plan }: { plan: PlanData | null }) {
   )
 }
 
-// ---------- 추천 위젯 ----------
-function RecommendationWidget({ rec }: { rec: RecResult | null }) {
+// ---------- 인라인 메타 (라벨 + 값) ----------
+function MetaInline({ label, value }: { label: string; value: string }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <span
+        style={{
+          fontSize: tokens.type.caption.size,
+          color: tokens.colors.muted,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.caption.tracking,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: tokens.type.bodyStrong.size,
+          fontWeight: tokens.type.bodyStrong.weight,
+          color: tokens.colors.ink,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.bodyStrong.tracking,
+        }}
+      >
+        {value}
+      </span>
+    </span>
+  )
+}
+
+// ============================================================
+//  추천 위젯
+// ============================================================
+function RecommendationWidget({ rec, isMobile }: { rec: RecResult | null; isMobile?: boolean }) {
   if (!rec) {
     return (
       <Card>
@@ -983,22 +1244,26 @@ function RecommendationWidget({ rec }: { rec: RecResult | null }) {
           title="추천 결과"
           subtitle="대화 중 자격증 추천을 요청하면 1순위 + 대안 + 학습 경로를 표시해요"
         />
-        <div style={{
-          padding: `${S.xl}px ${S.lg}px`,
-          textAlign: 'center',
-          color: C.muted2,
-          fontFamily: F.family,
-          fontSize: T.body.size,
-          lineHeight: T.body.lh,
-        }}>
-          <div style={{
-            fontSize: T.h3.size,
-            fontWeight: T.h3.weight,
-            color: C.ink,
-            fontFamily: F.display,
-            letterSpacing: T.h3.tracking,
-            marginBottom: S.sm,
-          }}>
+        <div
+          style={{
+            padding: `${tokens.spacing.xl}px ${tokens.spacing.lg}px`,
+            textAlign: 'center',
+            color: tokens.colors.muted,
+            fontFamily: tokens.fonts.family,
+            fontSize: tokens.type.body.size,
+            lineHeight: tokens.type.body.lh,
+          }}
+        >
+          <div
+            style={{
+              fontSize: tokens.type.h3.size,
+              fontWeight: tokens.type.h3.weight,
+              color: tokens.colors.ink,
+              fontFamily: tokens.fonts.display,
+              letterSpacing: tokens.type.h3.tracking,
+              marginBottom: tokens.spacing.sm,
+            }}
+          >
             아직 추천한 자격증이 없어요
           </div>
           <p style={{ margin: 0 }}>
@@ -1017,101 +1282,103 @@ function RecommendationWidget({ rec }: { rec: RecResult | null }) {
       />
 
       {/* 1순위 */}
-      <div>
-        <div style={{
-          fontSize: T.h2.size,
-          fontWeight: T.h2.weight,
-          color: C.accent,
-          fontFamily: F.display,
-          letterSpacing: T.h2.tracking,
-          marginBottom: S.xs,
-          display: 'flex',
-          alignItems: 'center',
-          gap: S.sm,
-        }}>
-          <span style={{
-            fontSize: T.h3.size,
-            fontWeight: T.h3.weight,
-            color: C.accent,
-            fontFamily: F.display,
-          }}>
+      <div style={{ marginBottom: tokens.spacing.md }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: tokens.spacing.sm,
+            marginBottom: tokens.spacing.xs,
+          }}
+        >
+          <span
+            style={{
+              fontSize: tokens.type.h3.size,
+              fontWeight: tokens.type.h3.weight,
+              color: tokens.colors.accent,
+              fontFamily: tokens.fonts.display,
+            }}
+          >
             1순위
           </span>
-          <span>{rec.primary.name}</span>
+          <span
+            style={{
+              fontSize: tokens.type.h1.size,
+              fontWeight: tokens.type.h1.weight,
+              color: tokens.colors.ink,
+              fontFamily: tokens.fonts.display,
+              letterSpacing: tokens.type.h1.tracking,
+            }}
+          >
+            {rec.primary.name}
+          </span>
         </div>
-        <p style={{
-          fontSize: T.body.size,
-          color: C.ink,
-          fontFamily: F.family,
-          letterSpacing: T.body.tracking,
-          lineHeight: T.body.lh,
-          margin: 0,
-          padding: `${S.xs}px ${S.md}px`,
-          background: C.parchment,
-          borderRadius: R.md,
-        }}>
+        <p
+          style={{
+            fontSize: tokens.type.body.size,
+            color: tokens.colors.ink,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.body.tracking,
+            lineHeight: tokens.type.body.lh,
+            margin: 0,
+            padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+            background: tokens.colors.parchment,
+            borderRadius: tokens.radius.md,
+          }}
+        >
           {rec.primary.reason}
         </p>
-        <div style={{
-          marginTop: S.sm,
-          padding: `${S.xs}px ${S.md}px`,
-          background: C.white,
-          borderRadius: R.sm,
-          border: '1px solid',
-          borderColor: C.hairline,
-          fontSize: T.caption.size,
-          color: C.muted,
-          fontFamily: F.family,
-          letterSpacing: T.caption.tracking,
-          lineHeight: 1.6,
-        }}>
-          <div><strong>준비 예상:</strong> {rec.primary.prepRange}</div>
-          <div><strong>주의점:</strong> {rec.primary.caution}</div>
+        <div
+          style={{
+            marginTop: tokens.spacing.sm,
+            padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+            background: tokens.colors.white,
+            borderRadius: tokens.radius.sm,
+            border: '1px solid',
+            borderColor: tokens.colors.hairline,
+          }}
+        >
+          <MetaRow label="준비 예상" value={rec.primary.prepRange} />
+          <MetaRow label="주의점" value={rec.primary.caution} />
         </div>
       </div>
 
       {/* 대안 */}
       {rec.alternatives.length > 0 && (
-        <div style={{ marginTop: S.lg }}>
-          <div style={{
-            fontSize: T.smallStrong.size,
-            fontWeight: T.smallStrong.weight,
-            color: C.muted,
-            fontFamily: F.family,
-            letterSpacing: T.smallStrong.tracking,
-            textTransform: 'uppercase',
-            marginBottom: S.sm,
-          }}>
-            대안 자격증
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: S.xs }}>
+        <div style={{ marginTop: tokens.spacing.md }}>
+          <Overline style={{ marginBottom: tokens.spacing.sm }}>대안 자격증</Overline>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.xs }}>
             {rec.alternatives.map((a, i) => (
               <div
                 key={i}
                 style={{
-                  padding: `${S.sm}px ${S.md}px`,
-                  background: C.parchment,
-                  borderRadius: R.md,
+                  padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+                  background: tokens.colors.parchment,
+                  borderRadius: tokens.radius.md,
                   border: '1px solid',
-                  borderColor: C.hairline,
+                  borderColor: tokens.colors.hairline,
                 }}
               >
-                <div style={{
-                  fontSize: T.captionStrong.size,
-                  fontWeight: T.captionStrong.weight,
-                  color: C.ink,
-                  fontFamily: F.family,
-                  letterSpacing: T.captionStrong.tracking,
-                  marginBottom: 2,
-                }}>
+                <div
+                  style={{
+                    fontSize: tokens.type.captionStrong.size,
+                    fontWeight: tokens.type.captionStrong.weight,
+                    color: tokens.colors.ink,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.captionStrong.tracking,
+                    marginBottom: 2,
+                  }}
+                >
                   {a.name}
                 </div>
-                <div style={{
-                  fontSize: T.caption.size,
-                  color: C.muted,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                }}>
+                <div
+                  style={{
+                    fontSize: tokens.type.caption.size,
+                    color: tokens.colors.inkLight,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.caption.tracking,
+                  }}
+                >
                   {a.reason}
                 </div>
               </div>
@@ -1122,145 +1389,150 @@ function RecommendationWidget({ rec }: { rec: RecResult | null }) {
 
       {/* 학습 경로 */}
       {rec.path?.basic && (
-        <div style={{
-          marginTop: S.lg,
-          paddingTop: S.lg,
-          borderTop: '1px solid',
-          borderColor: C.hairline,
-        }}>
-          <div style={{
-            fontSize: T.smallStrong.size,
-            fontWeight: T.smallStrong.weight,
-            color: C.muted,
-            fontFamily: F.family,
-            letterSpacing: T.smallStrong.tracking,
-            textTransform: 'uppercase',
-            marginBottom: S.sm,
-          }}>
-            기본 학습 경로
-          </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: S.sm,
-            fontSize: T.caption.size,
-            color: C.ink,
-            fontFamily: F.family,
-            letterSpacing: T.caption.tracking,
-          }}>
-            <div>
-              <span style={{ color: C.muted2, fontWeight: 500 }}>강의</span>
-              <div style={{ marginTop: 2, color: C.ink, fontWeight: T.captionStrong.weight }}>
-                {rec.path.basic.lecture}
-              </div>
-            </div>
-            <div>
-              <span style={{ color: C.muted2, fontWeight: 500 }}>기출·자료</span>
-              <div style={{ marginTop: 2, color: C.ink, fontWeight: T.captionStrong.weight }}>
-                {rec.path.basic.examMaterial}
-              </div>
-            </div>
-            <div>
-              <span style={{ color: C.muted2, fontWeight: 500 }}>교재</span>
-              <div style={{ marginTop: 2, color: C.ink, fontWeight: T.captionStrong.weight }}>
-                {rec.path.basic.textbook}
-              </div>
-            </div>
-            <div>
-              <span style={{ color: C.muted2, fontWeight: 500 }}>예상 비용</span>
-              <div style={{ marginTop: 2, color: C.ink, fontWeight: T.captionStrong.weight }}>
-                {rec.path.basic.estimatedCost}
-              </div>
-            </div>
+        <div
+          style={{
+            marginTop: tokens.spacing.lg,
+            paddingTop: tokens.spacing.lg,
+            borderTop: '1px solid',
+            borderColor: tokens.colors.hairline,
+          }}
+        >
+          <Overline style={{ marginBottom: tokens.spacing.sm }}>기본 학습 경로</Overline>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: tokens.spacing.sm,
+              fontSize: tokens.type.caption.size,
+              color: tokens.colors.ink,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.caption.tracking,
+            }}
+          >
+            <MetaBlock label="강의" value={rec.path.basic.lecture} />
+            <MetaBlock label="기출·자료" value={rec.path.basic.examMaterial} />
+            <MetaBlock label="교재" value={rec.path.basic.textbook} />
+            <MetaBlock label="예상 비용" value={rec.path.basic.estimatedCost} />
           </div>
           {rec.path.basic.reason && (
-            <div style={{
-              marginTop: S.sm,
-              padding: `${S.xs}px ${S.md}px`,
-              background: C.parchment,
-              borderRadius: R.sm,
-              fontSize: T.caption.size,
-              color: C.muted,
-              fontFamily: F.family,
-              letterSpacing: T.caption.tracking,
-              lineHeight: 1.5,
-            }}>
+            <div
+              style={{
+                marginTop: tokens.spacing.sm,
+                padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+                background: tokens.colors.parchment,
+                borderRadius: tokens.radius.sm,
+                fontSize: tokens.type.caption.size,
+                color: tokens.colors.inkLight,
+                fontFamily: tokens.fonts.family,
+                letterSpacing: tokens.type.caption.tracking,
+                lineHeight: 1.5,
+              }}
+            >
               <strong>선택 이유:</strong> {rec.path.basic.reason}
             </div>
           )}
           {rec.path.basic.paidLecture && (
-            <div style={{
-              marginTop: S.sm,
-              padding: `${S.sm}px ${S.md}px`,
-              background: '#fff4e5',
-              borderRadius: R.md,
-              border: '1px solid',
-              borderColor: '#ffcc80',
-              fontSize: T.caption.size,
-              color: '#b85c00',
-              fontFamily: F.family,
-              letterSpacing: T.caption.tracking,
-              fontWeight: T.captionStrong.weight,
-            }}>
-              <strong>유료 강의 옵션:</strong> {rec.path.basic.paidLecture}
-            </div>
+            <WarningBlock label="유료 강의 옵션" content={rec.path.basic.paidLecture} type="warning" />
           )}
           {rec.path.basic.caution && (
-            <div style={{
-              marginTop: S.sm,
-              padding: `${S.xs}px ${S.md}px`,
-              background: '#fde8e8',
-              borderRadius: R.sm,
-              fontSize: T.caption.size,
-              color: C.danger,
-              fontFamily: F.family,
-              letterSpacing: T.caption.tracking,
-              fontWeight: T.captionStrong.weight,
-            }}>
-              <strong>주의:</strong> {rec.path.basic.caution}
-            </div>
+            <WarningBlock label="주의" content={rec.path.basic.caution} type="danger" />
           )}
         </div>
       )}
 
       {/* 취업 가이드라인 */}
       {rec.guideline && (
-        <div style={{
-          marginTop: S.lg,
-          padding: S.md,
-          background: '#e8f0fe',
-          borderRadius: R.md,
-          border: '1px solid',
-          borderColor: '#b3d4fc',
-          fontSize: T.caption.size,
-          color: C.ink,
-          fontFamily: F.family,
-          letterSpacing: T.caption.tracking,
-          lineHeight: 1.6,
-        }}>
-          <div style={{
-            fontSize: T.smallStrong.size,
-            fontWeight: T.smallStrong.weight,
-            color: C.accent,
-            fontFamily: F.family,
-            letterSpacing: T.smallStrong.tracking,
-            textTransform: 'uppercase',
-            marginBottom: S.sm,
-          }}>
+        <div
+          style={{
+            marginTop: tokens.spacing.lg,
+            padding: tokens.spacing.md,
+            background: tokens.colors.accentBg,
+            borderRadius: tokens.radius.md,
+            border: '1px solid',
+            borderColor: tokens.colors.accentLight,
+          }}
+        >
+          <div
+            style={{
+              fontSize: tokens.type.smallStrong.size,
+              fontWeight: tokens.type.smallStrong.weight,
+              color: tokens.colors.accent,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.smallStrong.tracking,
+              textTransform: 'uppercase',
+              marginBottom: tokens.spacing.sm,
+            }}
+          >
             📋 취업 가이드라인 (조건부)
           </div>
-          <div><strong>직무 요약:</strong> {rec.guideline.jobSummary}</div>
-          <div><strong>필요 역량:</strong> {rec.guideline.requiredSkills}</div>
-          <div><strong>자격증 연결:</strong> {rec.guideline.certConnection}</div>
-          <div><strong>포트폴리오 방향:</strong> {rec.guideline.portfolio}</div>
-          <div><strong>참고 공고:</strong> {rec.guideline.referencePosts}</div>
+          <MetaRow label="직무 요약" value={rec.guideline.jobSummary} />
+          <MetaRow label="필요 역량" value={rec.guideline.requiredSkills} />
+          <MetaRow label="자격증 연결" value={rec.guideline.certConnection} />
+          <MetaRow label="포트폴리오 방향" value={rec.guideline.portfolio} />
+          <MetaRow label="참고 공고" value={rec.guideline.referencePosts} />
         </div>
       )}
     </Card>
   )
 }
 
-// ---------- 프로필 위젯 ----------
+// ---------- 메타 행 (라벨 + 값 두 줄) ----------
+function MetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ marginBottom: tokens.spacing.xs }}>
+      <span style={{ fontWeight: 500, color: tokens.colors.muted, fontSize: tokens.type.caption.size, fontFamily: tokens.fonts.family, letterSpacing: tokens.type.caption.tracking }}>
+        {label}:
+      </span>
+      <div style={{ color: tokens.colors.ink, fontWeight: 500, fontSize: tokens.type.caption.size, fontFamily: tokens.fonts.family, letterSpacing: tokens.type.caption.tracking, marginTop: 1 }}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
+// ---------- 2열 메타 블록 ----------
+function MetaBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span style={{ color: tokens.colors.muted, fontWeight: 500, fontSize: tokens.type.caption.size, fontFamily: tokens.fonts.family, letterSpacing: tokens.type.caption.tracking }}>
+        {label}
+      </span>
+      <div style={{ marginTop: 2, color: tokens.colors.ink, fontWeight: tokens.type.captionStrong.weight, fontSize: tokens.type.caption.size, fontFamily: tokens.fonts.family, letterSpacing: tokens.type.caption.tracking }}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
+// ---------- 경고 블록 (유 paid / caution) ----------
+function WarningBlock({ label, content, type }: { label: string; content: string; type: 'warning' | 'danger' }) {
+  const config = type === 'warning'
+    ? { bg: tokens.colors.warningBg, border: tokens.colors.warningBorder, color: tokens.colors.warningDark }
+    : { bg: tokens.colors.dangerBg, border: tokens.colors.dangerBorder, color: tokens.colors.danger }
+  return (
+    <div
+      style={{
+        marginTop: tokens.spacing.sm,
+        padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+        background: config.bg,
+        borderRadius: tokens.radius.md,
+        border: '1px solid',
+        borderColor: config.border,
+        fontSize: tokens.type.caption.size,
+        color: config.color,
+        fontFamily: tokens.fonts.family,
+        letterSpacing: tokens.type.caption.tracking,
+        fontWeight: tokens.type.captionStrong.weight,
+      }}
+    >
+      <strong>{label}:</strong> {content}
+    </div>
+  )
+}
+
+// ============================================================
+//  프로필 위젯
+// ============================================================
 function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Profile) => void }) {
   const [local, setLocal] = useState<Profile>(profile)
 
@@ -1268,17 +1540,17 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
     setLocal(profile)
   }, [profile])
 
-  const fields: { key: ProfileStringKey; label: string; type: 'text' }[] = [
-    { key: '진로', label: '진로 / 관심 직무', type: 'text' },
-    { key: '학습방식', label: '학습 방식', type: 'text' },
-    { key: '비용선호', label: '비용 선호', type: 'text' },
-    { key: '예산', label: '예산', type: 'text' },
-    { key: '가용시간', label: '가용 시간', type: 'text' },
-    { key: '목표시기', label: '목표 시기', type: 'text' },
-    { key: '목표회차', label: '목표 회차', type: 'text' },
-    { key: '관심공고', label: '관심 공고', type: 'text' },
-    { key: '영어성적', label: '영어 성적', type: 'text' },
-    { key: '유효기간자산', label: '유효기간 자산', type: 'text' },
+  const fields: { key: ProfileStringKey; label: string }[] = [
+    { key: '진로', label: '진로 / 관심 직무' },
+    { key: '학습방식', label: '학습 방식' },
+    { key: '비용선호', label: '비용 선호' },
+    { key: '예산', label: '예산' },
+    { key: '가용시간', label: '가용 시간' },
+    { key: '목표시기', label: '목표 시기' },
+    { key: '목표회차', label: '목표 회차' },
+    { key: '관심공고', label: '관심 공고' },
+    { key: '영어성적', label: '영어 성적' },
+    { key: '유효기간자산', label: '유효기간 자산' },
   ]
 
   const listFields: { key: ProfileArrayKey; label: string }[] = [
@@ -1286,7 +1558,7 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
     { key: '취득완료자격', label: '취득 완료 자격' },
   ]
 
-  const handleChange = (key: string, value: string) => {
+  const handleChange = (key: ProfileStringKey, value: string) => {
     setLocal(prev => ({ ...prev, [key]: value }))
   }
 
@@ -1297,194 +1569,125 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
   }
 
   const handleSave = () => {
-    onSave(local as Profile)
+    onSave(local)
   }
 
   return (
     <Card style={{ padding: 0, overflow: 'hidden' }}>
       {/* 헤더 */}
-      <div style={{
-        padding: S.lg,
-        borderBottom: '1px solid',
-        borderColor: C.hairline,
-        background: C.parchment,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
+      <div
+        style={{
+          padding: tokens.spacing.lg,
+          borderBottom: '1px solid',
+          borderColor: tokens.colors.hairline,
+          background: tokens.colors.parchment,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <div>
-          <div style={{
-            fontSize: T.h3.size,
-            fontWeight: T.h3.weight,
-            color: C.ink,
-            fontFamily: F.display,
-            letterSpacing: T.h3.tracking,
-            marginBottom: S.xs,
-          }}>
+          <div
+            style={{
+              fontSize: tokens.type.h3.size,
+              fontWeight: tokens.type.h3.weight,
+              color: tokens.colors.ink,
+              fontFamily: tokens.fonts.display,
+              letterSpacing: tokens.type.h3.tracking,
+              marginBottom: tokens.spacing.xs,
+            }}
+          >
             프로필
           </div>
-          <div style={{
-            fontSize: T.caption.size,
-            color: C.muted,
-            fontFamily: F.family,
-            letterSpacing: T.caption.tracking,
-          }}>
+          <div
+            style={{
+              fontSize: tokens.type.caption.size,
+              color: tokens.colors.inkLight,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.caption.tracking,
+            }}
+          >
             {profile.저장동의 ? '저장됨 — 수정 가능' : (Object.keys(profile).length > 0 ? '저장 전 — 동의하면 저장돼요' : '미설정')}
           </div>
         </div>
-        <button
-          onClick={handleSave}
-          style={{
-            padding: `${S.xs}px ${S.md}px`,
-            background: C.accent,
-            color: C.white,
-            border: 'none',
-            borderRadius: R.pill,
-            cursor: 'pointer',
-            fontSize: T.captionStrong.size,
-            fontWeight: T.captionStrong.weight,
-            fontFamily: F.family,
-            letterSpacing: T.captionStrong.tracking,
-            textTransform: 'uppercase',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-          }}
-        >
+        <SolidButton onClick={handleSave} style={{ boxShadow: tokens.shadows.button }}>
           저장
-        </button>
+        </SolidButton>
       </div>
 
-      <div style={{ padding: S.lg }}>
+      <div style={{ padding: tokens.spacing.lg }}>
         {/* 텍스트 필드 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: S.sm }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: tokens.spacing.sm }}>
           {fields.map(f => (
-            <div key={f.key}>
-              <label style={{
-                display: 'block',
-                fontSize: T.micro.size,
-                fontWeight: T.micro.weight,
-                color: C.muted,
-                fontFamily: F.family,
-                letterSpacing: T.micro.tracking,
-                textTransform: 'uppercase',
-                marginBottom: S.xs,
-              }}>
-                {f.label}
-              </label>
-              <input
-                type="text"
-                value={typeof local[f.key] === 'string' ? local[f.key] : ''}
-                onChange={e => handleChange(f.key, e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: `${S.xs}px ${S.sm}px`,
-                  background: C.white,
-                  border: '1px solid',
-                  borderColor: C.hairline,
-                  borderRadius: R.sm,
-                  fontSize: T.caption.size,
-                  color: C.ink,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
+            <ProfileTextField key={f.key} field={f} value={local[f.key] || ''} onChange={(v) => handleChange(f.key, v)} />
           ))}
         </div>
 
         {/* 목록 필드 */}
-        <div style={{ marginTop: S.md, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: S.sm }}>
+        <div style={{ marginTop: tokens.spacing.md, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: tokens.spacing.sm }}>
           {listFields.map(f => (
-            <div key={f.key}>
-              <label style={{
-                display: 'block',
-                fontSize: T.micro.size,
-                fontWeight: T.micro.weight,
-                color: C.muted,
-                fontFamily: F.family,
-                letterSpacing: T.micro.tracking,
-                textTransform: 'uppercase',
-                marginBottom: S.xs,
-              }}>
-                {f.label}
-                <span style={{ color: C.muted3, marginLeft: S.xs, fontWeight: 400 }}>
-                  (쉼표로 구분)
-                </span>
-              </label>
-              <input
-                type="text"
-                value={(local[f.key] || []).join(', ')}
-                onChange={e => handleListChange(f.key, e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: `${S.xs}px ${S.sm}px`,
-                  background: C.white,
-                  border: '1px solid',
-                  borderColor: C.hairline,
-                  borderRadius: R.sm,
-                  fontSize: T.caption.size,
-                  color: C.ink,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
+            <ProfileListField key={f.key} field={f} value={(local[f.key] || []).join(', ')} onChange={(v) => handleListChange(f.key, v)} />
           ))}
         </div>
 
         {/* 현재 저장된 값 미리보기 */}
-        <div style={{
-          marginTop: S.lg,
-          padding: S.md,
-          background: C.white,
-          borderRadius: R.md,
-          border: '1px solid',
-          borderColor: C.hairline,
-        }}>
-          <div style={{
-            fontSize: T.micro.size,
-            fontWeight: T.micro.weight,
-            color: C.muted,
-            fontFamily: F.family,
-            letterSpacing: T.micro.tracking,
-            textTransform: 'uppercase',
-            marginBottom: S.sm,
-          }}>
+        <div
+          style={{
+            marginTop: tokens.spacing.lg,
+            padding: tokens.spacing.md,
+            background: tokens.colors.white,
+            borderRadius: tokens.radius.md,
+            border: '1px solid',
+            borderColor: tokens.colors.hairline,
+          }}
+        >
+          <div
+            style={{
+              fontSize: tokens.type.micro.size,
+              fontWeight: tokens.type.micro.weight,
+              color: tokens.colors.muted,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.micro.tracking,
+              textTransform: 'uppercase',
+              marginBottom: tokens.spacing.sm,
+            }}
+          >
             저장된 프로필 미리보기
           </div>
-          <pre style={{
-            fontSize: T.small.size,
-            background: C.parchment,
-            color: C.ink,
-            padding: S.sm,
-            borderRadius: R.sm,
-            whiteSpace: 'pre-wrap',
-            maxHeight: 140,
-            overflow: 'auto',
-            fontFamily: F.family,
-            letterSpacing: T.small.tracking,
-            margin: 0,
-            border: '1px solid',
-            borderColor: C.hairline,
-          }}>
+          <pre
+            style={{
+              fontSize: tokens.type.small.size,
+              background: tokens.colors.parchment,
+              color: tokens.colors.ink,
+              padding: tokens.spacing.sm,
+              borderRadius: tokens.radius.sm,
+              whiteSpace: 'pre-wrap',
+              maxHeight: 140,
+              overflow: 'auto',
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.small.tracking,
+              margin: 0,
+              border: '1px solid',
+              borderColor: tokens.colors.hairline,
+            }}
+          >
             {JSON.stringify(local, null, 2) || '(저장된 프로필 없음)'}
           </pre>
         </div>
 
-        <p style={{
-          marginTop: S.md,
-          fontSize: T.small.size,
-          color: C.muted2,
-          fontFamily: F.family,
-          letterSpacing: T.small.tracking,
-          lineHeight: 1.5,
-        }}>
-          대화 중에{" "}
-          <span style={{ color: C.accent }}>"내 목표가 바뀌었어"</span> 또는{" "}
-          <span style={{ color: C.accent }}>"비용 선호를 변경할래"</span>라고 말해도 반영돼요.
+        <p
+          style={{
+            marginTop: tokens.spacing.md,
+            fontSize: tokens.type.small.size,
+            color: tokens.colors.muted,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.small.tracking,
+            lineHeight: 1.5,
+          }}
+        >
+          대화 중에{' '}
+          <InlineAccent>"내 목표가 바뀌었어"</InlineAccent> 또는{' '}
+          <InlineAccent>"비용 선호를 변경할래"</InlineAccent>라고 말해도 반영돼요.
           이미 확인된 값은 함부로 바꾸지 않고 새 정보만 갱신해요.
         </p>
       </div>
@@ -1492,8 +1695,710 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
   )
 }
 
-// ---------- MAIN PAGE ----------
+// ---------- 프로필 텍스트 필드 ----------
+function ProfileTextField({ field, value, onChange }: { field: { key: ProfileStringKey; label: string }; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label
+        style={{
+          display: 'block',
+          fontSize: tokens.type.micro.size,
+          fontWeight: tokens.type.micro.weight,
+          color: tokens.colors.muted,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.micro.tracking,
+          textTransform: 'uppercase',
+          marginBottom: tokens.spacing.xs,
+        }}
+      >
+        {field.label}
+      </label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: '100%',
+          padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+          background: tokens.colors.white,
+          border: '1px solid',
+          borderColor: tokens.colors.hairline,
+          borderRadius: tokens.radius.sm,
+          fontSize: tokens.type.caption.size,
+          color: tokens.colors.ink,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.caption.tracking,
+          outline: 'none',
+          boxSizing: 'border-box',
+          transition: 'border-color 150ms ease, box-shadow 150ms ease',
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = tokens.colors.accent
+          e.target.style.boxShadow = `0 0 0 3px rgba(0,102,204,0.1)`
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = tokens.colors.hairline
+          e.target.style.boxShadow = 'none'
+        }}
+      />
+    </div>
+  )
+}
+
+// ---------- 프로필 목록 필드 (쉼표 구분) ----------
+function ProfileListField({ field, value, onChange }: { field: { key: ProfileArrayKey; label: string }; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label
+        style={{
+          display: 'block',
+          fontSize: tokens.type.micro.size,
+          fontWeight: tokens.type.micro.weight,
+          color: tokens.colors.muted,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.micro.tracking,
+          textTransform: 'uppercase',
+          marginBottom: tokens.spacing.xs,
+        }}
+      >
+        {field.label}
+        <span style={{ color: tokens.colors.mutedLight, marginLeft: tokens.spacing.xs, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>
+          (쉼표로 구분)
+        </span>
+      </label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: '100%',
+          padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+          background: tokens.colors.white,
+          border: '1px solid',
+          borderColor: tokens.colors.hairline,
+          borderRadius: tokens.radius.sm,
+          fontSize: tokens.type.caption.size,
+          color: tokens.colors.ink,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.caption.tracking,
+          outline: 'none',
+          boxSizing: 'border-box',
+          transition: 'border-color 150ms ease, box-shadow 150ms ease',
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = tokens.colors.accent
+          e.target.style.boxShadow = `0 0 0 3px rgba(0,102,204,0.1)`
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = tokens.colors.hairline
+          e.target.style.boxShadow = 'none'
+        }}
+      />
+    </div>
+  )
+}
+
+// ============================================================
+//  추가 기능 위젯들
+// ============================================================
+
+// ---------- 캘린더 등록 블록 (p1 탭) ----------
+function CalendarRegisterBlock({ schedule, calendarConsentAsked, calendarConsent, calendarRegistered, onAskConsent, onConsent, onDecline }: {
+  schedule: ScheduleData | null
+  calendarConsentAsked: boolean
+  calendarConsent: boolean | null
+  calendarRegistered: boolean
+  onAskConsent: () => void
+  onConsent: () => void
+  onDecline: () => void
+}) {
+  if (!schedule) {
+    return (
+      <p
+        style={{
+          fontSize: tokens.type.caption.size,
+          color: tokens.colors.muted,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.caption.tracking,
+          lineHeight: 1.5,
+        }}
+      >
+        먼저 대화에서 특정 자격증 일정을 확인해 주세요.
+      </p>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
+      <div
+        style={{
+          padding: tokens.spacing.md,
+          background: tokens.colors.parchment,
+          borderRadius: tokens.radius.md,
+          border: '1px solid',
+          borderColor: tokens.colors.hairline,
+        }}
+      >
+        <div
+          style={{
+            fontSize: tokens.type.captionStrong.size,
+            fontWeight: tokens.type.captionStrong.weight,
+            color: tokens.colors.ink,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.captionStrong.tracking,
+          }}
+        >
+          현재 대화에서 확인된 일정
+        </div>
+        <div
+          style={{
+            fontSize: tokens.type.bodyStrong.size,
+            fontWeight: tokens.type.bodyStrong.weight,
+            color: tokens.colors.accent,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.bodyStrong.tracking,
+            marginTop: tokens.spacing.xs,
+          }}
+        >
+          {schedule.qualification}
+        </div>
+      </div>
+
+      {!calendarConsentAsked ? (
+        <SolidButton onClick={onAskConsent} style={{ boxShadow: tokens.shadows.button }}>
+          캘린더 등록 동의 물어보기
+        </SolidButton>
+      ) : (
+        <div
+          style={{
+            padding: tokens.spacing.md,
+            background: tokens.colors.parchment,
+            borderRadius: tokens.radius.md,
+            border: '1px solid',
+            borderColor: tokens.colors.hairline,
+          }}
+        >
+          <p
+            style={{
+              fontSize: tokens.type.caption.size,
+              color: tokens.colors.inkLight,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.caption.tracking,
+              lineHeight: 1.5,
+              margin: 0,
+            }}
+          >
+            공식 확정된 일정을 캘린더에 등록할까요?
+            <br />
+            (미등록 시 텍스트 일정과 연결 안내로 대체돼요)
+          </p>
+          <div style={{ display: 'flex', gap: tokens.spacing.sm, marginTop: tokens.spacing.md }}>
+            <SolidButton onClick={onConsent} style={{ boxShadow: tokens.shadows.button }}>
+              등록 동의
+            </SolidButton>
+            <GhostButton onClick={onDecline}>등록 안 함</GhostButton>
+          </div>
+
+          {calendarConsent === true && calendarRegistered === true && (
+            <StatusInfo type="success" message="✓ 동의했어요. 캘린더에 일정이 등록됐어요." />
+          )}
+          {calendarConsent === true && calendarRegistered === false && (
+            <StatusInfo type="warning" message="동의했지만 캘린더 연결이 아직 안 됐어요. 캘린더 연결하기를 먼저 진행해 주세요." />
+          )}
+          {calendarConsent === false && (
+            <StatusInfo type="neutral" message="등록하지 않기로 했어요. 텍스트 일정과 연결 안내를 제공해요." />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------- 상태 정보 박스 ----------
+function StatusInfo({ type, message }: { type: 'success' | 'warning' | 'neutral'; message: string }) {
+  const config = {
+    success: { bg: tokens.colors.successBg, color: tokens.colors.successDark, border: tokens.colors.successBorder },
+    warning: { bg: tokens.colors.warningBg, color: tokens.colors.warningDark, border: tokens.colors.warningBorder },
+    neutral: { bg: tokens.colors.parchment, color: tokens.colors.muted, border: tokens.colors.hairline },
+  }[type]
+  return (
+    <div
+      style={{
+        marginTop: tokens.spacing.sm,
+        padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+        background: config.bg,
+        borderRadius: tokens.radius.sm,
+        color: config.color,
+        fontSize: tokens.type.captionStrong.size,
+        fontWeight: tokens.type.captionStrong.weight,
+        fontFamily: tokens.fonts.family,
+        letterSpacing: tokens.type.captionStrong.tracking,
+        border: '1px solid',
+        borderColor: config.border,
+      }}
+    >
+      {message}
+    </div>
+  )
+}
+
+// ---------- 다음 경로 블록 ----------
+function NextPathBlock() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
+      <div
+        style={{
+          padding: tokens.spacing.md,
+          background: tokens.colors.successBg,
+          borderRadius: tokens.radius.md,
+          border: '1px solid',
+          borderColor: tokens.colors.successBorder,
+        }}
+      >
+        <div
+          style={{
+            fontSize: tokens.type.captionStrong.size,
+            fontWeight: tokens.type.captionStrong.weight,
+            color: tokens.colors.successDark,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.captionStrong.tracking,
+            marginBottom: tokens.spacing.xs,
+          }}
+        >
+          합격
+        </div>
+        <p
+          style={{
+            fontSize: tokens.type.caption.size,
+            color: tokens.colors.ink,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.caption.tracking,
+            margin: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          보유 자격증 추가, 상태 합격, 다음 자격증 제안
+        </p>
+      </div>
+      <div
+        style={{
+          padding: tokens.spacing.md,
+          background: tokens.colors.dangerBg,
+          borderRadius: tokens.radius.md,
+          border: '1px solid',
+          borderColor: tokens.colors.dangerBorder,
+        }}
+      >
+        <div
+          style={{
+            fontSize: tokens.type.captionStrong.size,
+            fontWeight: tokens.type.captionStrong.weight,
+            color: tokens.colors.danger,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.captionStrong.tracking,
+            marginBottom: tokens.spacing.xs,
+          }}
+        >
+          불합격
+        </div>
+        <p
+          style={{
+            fontSize: tokens.type.caption.size,
+            color: tokens.colors.ink,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.caption.tracking,
+            margin: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          완료율 가장 낮았던 단계만 말하고, 다음 회차 공식 일정 확인 후 그 단계 비중을 올린 계획을 제안해요.
+          위로보다 다음 계획을 먼저 제시해요.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ---------- Notion 연동 블록 ----------
+function NotionBlock({
+  plan,
+  notionToken,
+  notionParentPageId,
+  notionResult,
+  loading,
+  onTokenChange,
+  onParentPageIdChange,
+  onConnect,
+}: {
+  plan: PlanData | null
+  notionToken: string
+  notionParentPageId: string
+  notionResult: { type: 'success' | 'error' | 'fallback'; url?: string; message: string } | null
+  loading: boolean
+  onTokenChange: (v: string) => void
+  onParentPageIdChange: (v: string) => void
+  onConnect: () => void
+}) {
+  if (!plan) {
+    return (
+      <p
+        style={{
+          fontSize: tokens.type.caption.size,
+          color: tokens.colors.muted,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.caption.tracking,
+          lineHeight: 1.5,
+          margin: 0,
+        }}
+      >
+        먼저 대화에서 학습 계획이 만들어져야 해요.
+      </p>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
+      <div
+        style={{
+          padding: tokens.spacing.md,
+          background: tokens.colors.parchment,
+          borderRadius: tokens.radius.md,
+          border: '1px solid',
+          borderColor: tokens.colors.hairline,
+        }}
+      >
+        <div
+          style={{
+            fontSize: tokens.type.captionStrong.size,
+            fontWeight: tokens.type.captionStrong.weight,
+            color: tokens.colors.ink,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.captionStrong.tracking,
+          }}
+        >
+          현재 계획
+        </div>
+        <div
+          style={{
+            fontSize: tokens.type.bodyStrong.size,
+            fontWeight: tokens.type.bodyStrong.weight,
+            color: tokens.colors.accent,
+            fontFamily: tokens.fonts.family,
+            letterSpacing: tokens.type.bodyStrong.tracking,
+            marginTop: tokens.spacing.xs,
+          }}
+        >
+          {plan.qualification} · 시험일: {plan.examDate}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: tokens.spacing.sm }}>
+        <NotionInput
+          label="Notion 토큰"
+          value={notionToken}
+          onChange={onTokenChange}
+        />
+        <NotionInput
+          label="부모 페이지 ID"
+          value={notionParentPageId}
+          onChange={onParentPageIdChange}
+        />
+      </div>
+
+      <SolidButton
+        onClick={onConnect}
+        disabled={loading}
+        style={{ alignSelf: 'flex-start', boxShadow: loading ? 'none' : tokens.shadows.button }}
+      >
+        {loading ? '연동 중…' : 'Notion 학습 공간 만들기'}
+      </SolidButton>
+
+      {notionResult && (
+        <NotionResult result={notionResult} />
+      )}
+    </div>
+  )
+}
+
+// ---------- Notion 입력 필드 ----------
+function NotionInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label
+        style={{
+          display: 'block',
+          fontSize: tokens.type.micro.size,
+          fontWeight: tokens.type.micro.weight,
+          color: tokens.colors.muted,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.micro.tracking,
+          textTransform: 'uppercase',
+          marginBottom: tokens.spacing.xs,
+        }}
+      >
+        {label}
+      </label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: '100%',
+          padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+          background: tokens.colors.white,
+          border: '1px solid',
+          borderColor: tokens.colors.hairline,
+          borderRadius: tokens.radius.sm,
+          fontSize: tokens.type.caption.size,
+          color: tokens.colors.ink,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.caption.tracking,
+          outline: 'none',
+          boxSizing: 'border-box',
+          transition: 'border-color 150ms ease, box-shadow 150ms ease',
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = tokens.colors.accent
+          e.target.style.boxShadow = `0 0 0 3px rgba(0,102,204,0.1)`
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = tokens.colors.hairline
+          e.target.style.boxShadow = 'none'
+        }}
+      />
+    </div>
+  )
+}
+
+// ---------- Notion 결과 표시 ----------
+function NotionResult({ result }: { result: { type: 'success' | 'error' | 'fallback'; url?: string; message: string } }) {
+  const config = {
+    success: { bg: tokens.colors.successBg, color: tokens.colors.successDark, border: tokens.colors.successBorder },
+    fallback: { bg: tokens.colors.parchment, color: tokens.colors.inkLight, border: tokens.colors.hairline },
+    error: { bg: tokens.colors.dangerBg, color: tokens.colors.danger, border: tokens.colors.dangerBorder },
+  }[result.type]
+
+  return (
+    <div
+      style={{
+        padding: tokens.spacing.md,
+        background: config.bg,
+        borderRadius: tokens.radius.md,
+        border: '1px solid',
+        borderColor: config.border,
+        color: config.color,
+        fontSize: tokens.type.caption.size,
+        fontFamily: tokens.fonts.family,
+        letterSpacing: tokens.type.caption.tracking,
+        lineHeight: 1.5,
+      }}
+    >
+      {result.message}
+      {result.url && (
+        <a
+          href={result.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'block',
+            marginTop: tokens.spacing.sm,
+            color: tokens.colors.accent,
+            fontWeight: tokens.type.captionStrong.weight,
+            textDecoration: 'none',
+            borderBottom: '1px solid',
+            borderColor: tokens.colors.accentLight,
+          }}
+        >
+          Notion 페이지 열기 →
+        </a>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
+//  버튼 컴포넌트
+// ============================================================
+
+// ---------- 솔리드 버튼 (Action Blue) ----------
+function SolidButton({
+  children,
+  onClick,
+  disabled,
+  style,
+  size = 'md',
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+  style?: React.CSSProperties
+  size?: 'sm' | 'md' | 'lg'
+}) {
+  const paddingMap = {
+    sm: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+    md: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+    lg: `${tokens.spacing.md}px ${tokens.spacing.xl}px`,
+  }
+  const fontSizeMap = {
+    sm: tokens.type.caption.size,
+    md: tokens.type.captionStrong.size,
+    lg: tokens.type.body.size,
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-disabled={disabled}
+      style={{
+        padding: paddingMap[size],
+        background: disabled ? tokens.colors.parchment : tokens.colors.accent,
+        color: disabled ? tokens.colors.muted : tokens.colors.white,
+        border: 'none',
+        borderRadius: tokens.radius.pill,
+        cursor: disabled ? 'default' : 'pointer',
+        fontSize: fontSizeMap[size],
+        fontWeight: tokens.type.captionStrong.weight,
+        fontFamily: tokens.fonts.family,
+        letterSpacing: tokens.type.captionStrong.tracking,
+        textTransform: 'uppercase',
+        boxShadow: disabled ? 'none' : tokens.shadows.button,
+        transition: 'background 150ms ease, box-shadow 150ms ease, transform 100ms ease',
+        opacity: disabled ? 0.6 : 1,
+        ...style,
+      }}
+      onMouseDown={(e) => {
+        if (!disabled) e.currentTarget.style.transform = 'scale(0.97)'
+      }}
+      onMouseUp={(e) => {
+        e.currentTarget.style.transform = 'scale(1)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1)'
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+// ---------- 고스트 버튼 (흰 배경 + 테두리) ----------
+function GhostButton({ children, onClick, disabled, style }: {
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+  style?: React.CSSProperties
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-disabled={disabled}
+      style={{
+        padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+        background: tokens.colors.white,
+        color: tokens.colors.ink,
+        border: '1px solid',
+        borderColor: tokens.colors.hairline,
+        borderRadius: tokens.radius.pill,
+        cursor: disabled ? 'default' : 'pointer',
+        fontSize: tokens.type.captionStrong.size,
+        fontWeight: tokens.type.captionStrong.weight,
+        fontFamily: tokens.fonts.family,
+        letterSpacing: tokens.type.captionStrong.tracking,
+        textTransform: 'uppercase',
+        transition: 'background 150ms ease, border-color 150ms ease',
+        opacity: disabled ? 0.6 : 1,
+        ...style,
+      }}
+      onMouseEnter={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.background = tokens.colors.parchment
+          e.currentTarget.style.borderColor = tokens.colors.hairlineStrong
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = tokens.colors.white
+        e.currentTarget.style.borderColor = tokens.colors.hairline
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+// ============================================================
+//  모바일 토글 버튼 (채팅 패널 열고 닫기)
+// ============================================================
+function ChatToggle({
+  open,
+  onToggle,
+}: {
+  open: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-label={open ? '채팅 패널 닫기' : '채팅 패널 열기'}
+      aria-expanded={open}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: tokens.spacing.xs,
+        padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+        background: tokens.colors.white,
+        color: tokens.colors.ink,
+        border: '1px solid',
+        borderColor: tokens.colors.hairline,
+        borderRadius: tokens.radius.pill,
+        cursor: 'pointer',
+        fontSize: tokens.type.caption.size,
+        fontWeight: tokens.type.captionStrong.weight,
+        fontFamily: tokens.fonts.family,
+        letterSpacing: tokens.type.caption.tracking,
+        textTransform: 'uppercase',
+        boxShadow: tokens.shadows.card,
+        transition: 'background 150ms ease, border-color 150ms ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = tokens.colors.parchment
+        e.currentTarget.style.borderColor = tokens.colors.hairlineStrong
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = tokens.colors.white
+        e.currentTarget.style.borderColor = tokens.colors.hairline
+      }}
+    >
+      <ChatIcon open={open} />
+      {open ? '채팅 닫기' : '채팅 열기'}
+    </button>
+  )
+}
+
+// ---------- 채팅 아이콘 ----------
+function ChatIcon({ open }: { open: boolean }) {
+  if (open) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    )
+  }
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+// ============================================================
+//  MAIN PAGE
+// ============================================================
 export default function Home() {
+  const isMobile = useMediaQuery('(max-width: 720px)')
+
   const [tab, setTab] = useState<TabId>('chat')
   const [messages, setMessages] = useState<Message[]>(loadMessages)
   const [input, setInput] = useState('')
@@ -1512,6 +2417,7 @@ export default function Home() {
     typeof localStorage !== 'undefined' ? localStorage.getItem('certCoachNotionParentPageId') || '' : '')
   const [notionResult, setNotionResult] = useState<{ type: 'success' | 'error' | 'fallback'; url?: string; message: string } | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const [chatOpen, setChatOpen] = useState(true)
 
   // 첫 방문 안내 + 저장된 프로필 안내
   useEffect(() => {
@@ -1682,60 +2588,75 @@ export default function Home() {
     ['p1', '기능'],
   ] as const
 
+  // 모바일일 때 채팅이 닫혀있으면 채팅 패널 숨김
+  const showChat = !isMobile || chatOpen
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: C.back,
-      fontFamily: F.family,
-    }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: tokens.colors.back,
+        fontFamily: tokens.fonts.family,
+        color: tokens.colors.ink,
+      }}
+    >
       {/* HEADER */}
-      <header style={{
-        background: C.white,
-        borderBottom: '1px solid',
-        borderColor: C.hairline,
-        padding: `${S.md}px ${S.lg}px`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        boxShadow: SH.card,
-      }}>
+      <header
+        style={{
+          background: tokens.colors.white,
+          borderBottom: '1px solid',
+          borderColor: tokens.colors.hairline,
+          padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          boxShadow: tokens.shadows.card,
+          gap: tokens.spacing.md,
+        }}
+      >
         <div>
-          <h1 style={{
-            fontSize: T.h2.size,
-            fontWeight: T.h2.weight,
-            color: C.ink,
-            fontFamily: F.display,
-            letterSpacing: T.h2.tracking,
-            margin: 0,
-            lineHeight: T.h2.lh,
-          }}>
+          <h1
+            style={{
+              fontSize: tokens.type.h2.size,
+              fontWeight: tokens.type.h2.weight,
+              color: tokens.colors.ink,
+              fontFamily: tokens.fonts.display,
+              letterSpacing: tokens.type.h2.tracking,
+              margin: 0,
+              lineHeight: tokens.type.h2.lh,
+            }}
+          >
             자격증 패스 코치
           </h1>
-          <p style={{
-            fontSize: T.small.size,
-            color: C.muted2,
-            margin: `${S.xs}px 0 0`,
-            fontFamily: F.family,
-            letterSpacing: T.small.tracking,
-          }}>
+          <p
+            style={{
+              fontSize: tokens.type.small.size,
+              color: tokens.colors.muted,
+              margin: `${tokens.spacing.xs}px 0 0`,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.small.tracking,
+            }}
+          >
             처음 자격증 준비를 시작하는 분을 위한 대화형 코치
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: S.sm }}>
-          <span style={{
-            fontSize: T.micro.size,
-            color: C.muted2,
-            fontFamily: F.family,
-            letterSpacing: T.micro.tracking,
-            textTransform: 'uppercase',
-            fontWeight: T.micro.weight,
-            padding: `${S.xs}px ${S.sm}px`,
-            background: C.parchment,
-            borderRadius: R.pill,
-          }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.sm, flexShrink: 0 }}>
+          <span
+            style={{
+              fontSize: tokens.type.micro.size,
+              color: tokens.colors.muted,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.micro.tracking,
+              textTransform: 'uppercase',
+              fontWeight: tokens.type.micro.weight,
+              padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+              background: tokens.colors.parchment,
+              borderRadius: tokens.radius.pill,
+            }}
+          >
             프로필: {헤더프로필}
           </span>
           <button
@@ -1750,18 +2671,29 @@ export default function Home() {
               setMessages(prev => [...prev, { role: 'bot', text: '프로필과 대화 기록이 초기화되었어요. 처음부터 다시 시작할 수 있어요.', meta: 'reset' }])
             }}
             style={{
-              fontSize: T.micro.size,
-              padding: `${S.xs}px ${S.sm}px`,
+              fontSize: tokens.type.micro.size,
+              padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
               border: '1px solid',
-              borderColor: C.hairline,
-              color: C.muted,
-              background: C.white,
-              borderRadius: R.pill,
+              borderColor: tokens.colors.hairline,
+              color: tokens.colors.muted,
+              background: tokens.colors.white,
+              borderRadius: tokens.radius.pill,
               cursor: 'pointer',
               textTransform: 'uppercase',
-              letterSpacing: T.micro.tracking,
-              fontWeight: T.micro.weight,
-              fontFamily: F.family,
+              letterSpacing: tokens.type.micro.tracking,
+              fontWeight: tokens.type.micro.weight,
+              fontFamily: tokens.fonts.family,
+              transition: 'background 150ms ease, border-color 150ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = tokens.colors.parchment
+              e.currentTarget.style.borderColor = tokens.colors.hairlineStrong
+              e.currentTarget.style.color = tokens.colors.ink
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = tokens.colors.white
+              e.currentTarget.style.borderColor = tokens.colors.hairline
+              e.currentTarget.style.color = tokens.colors.muted
             }}
           >
             초기화
@@ -1769,224 +2701,274 @@ export default function Home() {
         </div>
       </header>
 
+      {/* 모바일 토글 (모바일에서만 보임) */}
+      {isMobile && (
+        <div
+          style={{
+            padding: `${tokens.spacing.sm}px ${tokens.spacing.lg}px`,
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <ChatToggle open={chatOpen} onToggle={() => setChatOpen(!chatOpen)} />
+        </div>
+      )}
+
       {/* MAIN LAYOUT */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '360px 1fr',
-        gap: 0,
-        minHeight: 'calc(100vh - 63px)',
-      }}>
-        {/* CHAT PANEL — 좌측 고정 */}
-        <aside style={{
-          background: C.white,
-          borderRight: '1px solid',
-          borderColor: C.hairline,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}>
-          {/* 봇 헤더 */}
-          <div style={{
-            padding: `${S.md}px ${S.lg}px`,
-            borderBottom: '1px solid',
-            borderColor: C.hairline,
-            background: C.parchment,
-            display: 'flex',
-            alignItems: 'center',
-            gap: S.md,
-          }}>
-            <div style={{
-              width: 44, height: 44,
-              borderRadius: R.pill,
-              background: C.accent,
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '360px 1fr',
+          minHeight: 'calc(100vh - 63px - ' + (isMobile ? 0 : 0) + 'px)',
+        }}
+      >
+        {/* CHAT PANEL (모바일에서 토글 가능) */}
+        {showChat && (
+          <aside
+            style={{
+              background: tokens.colors.white,
+              borderRight: '1px solid',
+              borderColor: tokens.colors.hairline,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: C.white,
-              fontSize: T.bodyStrong.size,
-              fontWeight: T.bodyStrong.weight,
-              fontFamily: F.display,
-              letterSpacing: T.bodyStrong.tracking,
-              flexShrink: 0,
-              boxShadow: '0 2px 6px rgba(0,102,204,0.25)',
-            }}>
-              코
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontSize: T.captionStrong.size,
-                fontWeight: T.captionStrong.weight,
-                color: C.ink,
-                fontFamily: F.family,
-                letterSpacing: T.captionStrong.tracking,
-              }}>
-                자격증 패스 코치
-              </div>
-              <div style={{
-                fontSize: T.micro.size,
-                color: C.muted2,
-                fontFamily: F.family,
-                letterSpacing: T.micro.tracking,
-                marginTop: 1,
-              }}>
-                추천 · 일정 · 학습 경로 · 진도 관리
-              </div>
-            </div>
-            <span style={{
-              fontSize: T.micro.size,
-              color: C.success,
-              fontWeight: T.micro.weight,
-              fontFamily: F.family,
-              letterSpacing: T.micro.tracking,
-              textTransform: 'uppercase',
-              padding: `${S.xs}px ${S.sm}px`,
-              background: '#e8f5e9',
-              borderRadius: R.pill,
-            }}>
-              온라인
-            </span>
-          </div>
-
-          {/* 대화 영역 */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: S.lg,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: S.sm,
-            minHeight: 320,
-          }}>
-            {messages.length === 0 && (
-              <div style={{
-                textAlign: 'center',
-                color: C.muted2,
-                fontFamily: F.family,
-                fontSize: T.body.size,
-                lineHeight: T.body.lh,
-                paddingTop: 40,
-              }}>
-                <p style={{ margin: 0 }}>대화로 시작하세요.</p>
-                <p style={{
-                  fontSize: T.caption.size,
-                  color: C.muted3,
-                  marginTop: S.sm,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                }}>
-                  예:{" "}
-                  <span style={{
-                    color: C.accent,
-                    fontWeight: 500,
-                    borderBottom: '1px solid',
-                    borderColor: '#b3d4fc',
-                  }}>IT 분야 자격증 추천해줘</span>
-                  ,{" "}
-                  <span style={{
-                    color: C.accent,
-                    fontWeight: 500,
-                    borderBottom: '1px solid',
-                    borderColor: '#b3d4fc',
-                  }}>정보처리기사 일정 알려줘</span>
-                </p>
-              </div>
-            )}
-            {messages.map((msg, idx) => (
-              <MessageBubble key={idx} msg={msg} />
-            ))}
-            {loading && (
-              <div style={{
-                alignSelf: 'flex-start',
-                background: C.parchment,
-                borderRadius: '4px 18px 18px 18px',
-                padding: `${S.sm}px ${S.md}px`,
-                color: C.muted,
-                fontSize: T.caption.size,
-                fontFamily: F.family,
-                letterSpacing: T.caption.tracking,
-              }}>
-                코치 답변 중…
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* 입력 영역 */}
-          <div style={{
-            padding: `${S.md}px ${S.lg}px`,
-            borderTop: '1px solid',
-            borderColor: C.hairline,
-            background: C.white,
-          }}>
-            <div style={{
-              display: 'flex',
-              gap: S.sm,
-              alignItems: 'center',
-            }}>
-              <input
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="메시지를 입력하세요 (Enter: 전송, Shift+Enter: 줄바꿈)"
+              flexDirection: 'column',
+              overflow: 'hidden',
+              height: 'calc(100vh - 63px)',
+            }}
+          >
+            {/* 봇 헤더 */}
+            <div
+              style={{
+                padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
+                borderBottom: '1px solid',
+                borderColor: tokens.colors.hairline,
+                background: tokens.colors.parchment,
+                display: 'flex',
+                alignItems: 'center',
+                gap: tokens.spacing.md,
+                flexShrink: 0,
+              }}
+            >
+              <div
                 style={{
-                  flex: 1,
-                  padding: `${S.sm}px ${S.md}px`,
-                  background: C.parchment,
-                  color: C.ink,
-                  border: '1.5px solid',
-                  borderColor: C.hairline,
-                  borderRadius: R.pill,
-                  fontSize: T.body.size,
-                  fontWeight: T.body.weight,
-                  fontFamily: F.family,
-                  letterSpacing: T.body.tracking,
-                  outline: 'none',
-                  lineHeight: T.body.lh,
-                  transition: 'border-color 120ms ease',
-                }}
-              />
-              <button
-                disabled={loading || !input.trim()}
-                onClick={() => sendMessage()}
-                style={{
-                  padding: `${S.sm}px ${S.md}px`,
-                  borderRadius: R.pill,
-                  background: loading || !input.trim() ? C.parchment : C.accent,
-                  color: loading || !input.trim() ? C.muted : C.white,
-                  border: 'none',
-                  cursor: loading || !input.trim() ? 'default' : 'pointer',
-                  fontSize: T.captionStrong.size,
-                  fontWeight: T.captionStrong.weight,
-                  fontFamily: F.family,
-                  letterSpacing: T.captionStrong.tracking,
-                  textTransform: 'uppercase',
-                  boxShadow: loading || !input.trim() ? 'none' : '0 1px 3px rgba(0,102,204,0.3)',
-                  transition: 'background 120ms ease, box-shadow 120ms ease',
-                  minWidth: 44,
+                  width: 44,
+                  height: 44,
+                  borderRadius: tokens.radius.pill,
+                  background: tokens.colors.accent,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: tokens.colors.white,
+                  fontSize: tokens.type.bodyStrong.size,
+                  fontWeight: tokens.type.bodyStrong.weight,
+                  fontFamily: tokens.fonts.display,
+                  letterSpacing: tokens.type.bodyStrong.tracking,
+                  flexShrink: 0,
+                  boxShadow: '0 2px 6px rgba(0,102,204,0.25)',
                 }}
               >
-                전송
-              </button>
+                코
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: tokens.type.captionStrong.size,
+                    fontWeight: tokens.type.captionStrong.weight,
+                    color: tokens.colors.ink,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.captionStrong.tracking,
+                  }}
+                >
+                  자격증 패스 코치
+                </div>
+                <div
+                  style={{
+                    fontSize: tokens.type.micro.size,
+                    color: tokens.colors.muted,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.micro.tracking,
+                    marginTop: 1,
+                  }}
+                >
+                  추천 · 일정 · 학습 경로 · 진도 관리
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: tokens.type.micro.size,
+                  color: tokens.colors.successDark,
+                  fontWeight: tokens.type.micro.weight,
+                  fontFamily: tokens.fonts.family,
+                  letterSpacing: tokens.type.micro.tracking,
+                  textTransform: 'uppercase',
+                  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                  background: tokens.colors.successBg,
+                  borderRadius: tokens.radius.pill,
+                }}
+              >
+                온라인
+              </span>
             </div>
-          </div>
-        </aside>
 
-        {/* DASHBOARD — 우측 */}
-        <main style={{
-          padding: S.lg,
-          overflowY: 'auto',
-          background: C.back,
-        }}>
+            {/* 대화 영역 */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: tokens.spacing.lg,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: tokens.spacing.sm,
+                minHeight: 320,
+              }}
+            >
+              {messages.length === 0 && (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    color: tokens.colors.muted,
+                    fontFamily: tokens.fonts.family,
+                    fontSize: tokens.type.body.size,
+                    lineHeight: tokens.type.body.lh,
+                    paddingTop: 40,
+                  }}
+                >
+                  <p style={{ margin: 0 }}>대화로 시작하세요.</p>
+                  <p
+                    style={{
+                      fontSize: tokens.type.caption.size,
+                      color: tokens.colors.mutedLight,
+                      marginTop: tokens.spacing.sm,
+                      fontFamily: tokens.fonts.family,
+                      letterSpacing: tokens.type.caption.tracking,
+                    }}
+                  >
+                    예:{' '}
+                    <InlineAccent>IT 분야 자격증 추천해줘</InlineAccent>
+                    ,{' '}
+                    <InlineAccent>정보처리기사 일정 알려줘</InlineAccent>
+                  </p>
+                </div>
+              )}
+              {messages.map((msg, idx) => (
+                <MessageBubble key={idx} msg={msg} />
+              ))}
+              {loading && (
+                <div
+                  style={{
+                    alignSelf: 'flex-start',
+                    background: tokens.colors.parchment,
+                    borderRadius: `${tokens.radius.xs}px ${tokens.radius.lg}px ${tokens.radius.lg}px ${tokens.radius.lg}px`,
+                    padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+                    color: tokens.colors.inkLight,
+                    fontSize: tokens.type.caption.size,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.caption.tracking,
+                  }}
+                >
+                  코치 답변 중…
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* 입력 영역 */}
+            <div
+              style={{
+                padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
+                borderTop: '1px solid',
+                borderColor: tokens.colors.hairline,
+                background: tokens.colors.white,
+                flexShrink: 0,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  gap: tokens.spacing.sm,
+                  alignItems: 'center',
+                }}
+              >
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="메시지를 입력하세요 (Enter: 전송, Shift+Enter: 줄바꿈)"
+                  style={{
+                    flex: 1,
+                    padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+                    background: tokens.colors.parchment,
+                    color: tokens.colors.ink,
+                    border: '1.5px solid',
+                    borderColor: tokens.colors.hairline,
+                    borderRadius: tokens.radius.pill,
+                    fontSize: tokens.type.body.size,
+                    fontWeight: tokens.type.body.weight,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.body.tracking,
+                    outline: 'none',
+                    lineHeight: tokens.type.body.lh,
+                    transition: 'border-color 150ms ease, box-shadow 150ms ease',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = tokens.colors.accent
+                    e.target.style.boxShadow = `0 0 0 3px rgba(0,102,204,0.1)`
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = tokens.colors.hairline
+                    e.target.style.boxShadow = 'none'
+                  }}
+                />
+                <button
+                  disabled={loading || !input.trim()}
+                  onClick={() => sendMessage()}
+                  style={{
+                    padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+                    borderRadius: tokens.radius.pill,
+                    background: loading || !input.trim() ? tokens.colors.parchment : tokens.colors.accent,
+                    color: loading || !input.trim() ? tokens.colors.muted : tokens.colors.white,
+                    border: 'none',
+                    cursor: loading || !input.trim() ? 'default' : 'pointer',
+                    fontSize: tokens.type.captionStrong.size,
+                    fontWeight: tokens.type.captionStrong.weight,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.captionStrong.tracking,
+                    textTransform: 'uppercase',
+                    boxShadow: loading || !input.trim() ? 'none' : tokens.shadows.button,
+                    transition: 'background 150ms ease, box-shadow 150ms ease, transform 100ms ease',
+                    minWidth: 44,
+                  }}
+                  onMouseDown={(e) => { if (!loading && input.trim()) e.currentTarget.style.transform = 'scale(0.97)' }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+                >
+                  전송
+                </button>
+              </div>
+            </div>
+          </aside>
+        )}
+
+        {/* DASHBOARD */}
+        <main
+          style={{
+            padding: tokens.spacing.lg,
+            overflowY: 'auto',
+            background: tokens.colors.back,
+            minWidth: 0,
+          }}
+        >
           {/* 탭 내비게이션 */}
-          <nav style={{
-            display: 'flex',
-            gap: S.xs,
-            marginBottom: S.lg,
-            flexWrap: 'wrap',
-            paddingBottom: S.sm,
-            borderBottom: '1px solid',
-            borderColor: C.hairline,
-          }}>
+          <nav
+            style={{
+              display: 'flex',
+              gap: tokens.spacing.xs,
+              marginBottom: tokens.spacing.md,
+              flexWrap: 'wrap',
+              paddingBottom: tokens.spacing.sm,
+              borderBottom: '1px solid',
+              borderColor: tokens.colors.hairline,
+            }}
+          >
             {tabs.map(([id, label]) => (
               <TabButton key={id} active={tab === id} label={label} onClick={() => setTab(id as TabId)} />
             ))}
@@ -1994,36 +2976,36 @@ export default function Home() {
 
           {/* 탭 콘텐츠 */}
           {tab === 'dashboard' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: S.md }}>
-              <RecommendationWidget rec={rec} />
-              {schedule && (
-                <CalendarWidget schedule={schedule} />
-              )}
-              {plan && (
-                <PlanWidget plan={plan} />
-              )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
+              <RecommendationWidget rec={rec} isMobile={isMobile} />
+              {schedule && <CalendarWidget schedule={schedule} isMobile={isMobile} />}
+              {plan && <PlanWidget plan={plan} isMobile={isMobile} />}
               {!rec && !schedule && !plan && (
                 <Card>
                   <CardHeader
                     title="대시보드"
                     subtitle="대화에서 자격증 추천을 요청하면 여기에 결과가 모여요"
                   />
-                  <div style={{
-                    padding: `${S.xl}px ${S.lg}px`,
-                    textAlign: 'center',
-                    color: C.muted2,
-                    fontFamily: F.family,
-                    fontSize: T.body.size,
-                    lineHeight: T.body.lh,
-                  }}>
-                    <div style={{
-                      fontSize: T.h3.size,
-                      fontWeight: T.h3.weight,
-                      color: C.ink,
-                      fontFamily: F.display,
-                      letterSpacing: T.h3.tracking,
-                      marginBottom: S.sm,
-                    }}>
+                  <div
+                    style={{
+                      padding: `${tokens.spacing.xl}px ${tokens.spacing.lg}px`,
+                      textAlign: 'center',
+                      color: tokens.colors.muted,
+                      fontFamily: tokens.fonts.family,
+                      fontSize: tokens.type.body.size,
+                      lineHeight: tokens.type.body.lh,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: tokens.type.h3.size,
+                        fontWeight: tokens.type.h3.weight,
+                        color: tokens.colors.ink,
+                        fontFamily: tokens.fonts.display,
+                        letterSpacing: tokens.type.h3.tracking,
+                        marginBottom: tokens.spacing.sm,
+                      }}
+                    >
                       아직 추천할 자격증이 없어요
                     </div>
                     <p style={{ margin: 0 }}>
@@ -2037,206 +3019,29 @@ export default function Home() {
             </div>
           )}
 
-          {tab === 'schedule' && (
-            <div>
-              <CalendarWidget schedule={schedule} />
-            </div>
-          )}
+          {tab === 'schedule' && <CalendarWidget schedule={schedule} />}
 
-          {tab === 'plan' && (
-            <div>
-              <PlanWidget plan={plan} />
-            </div>
-          )}
+          {tab === 'plan' && <PlanWidget plan={plan} />}
 
-          {tab === 'profile' && (
-            <div>
-              <ProfileWidget profile={profile} onSave={setProfile} />
-            </div>
-          )}
+          {tab === 'profile' && <ProfileWidget profile={profile} onSave={setProfile} isMobile={isMobile} />}
 
           {tab === 'p1' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: S.md }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
               {/* 캘린더 등록 */}
               <Card>
                 <CardHeader
                   title="캘린더 등록"
                   subtitle="Google Calendar 커넥터 연결 확인 후, 공식 확정 일정만 사용자 동의 후 등록해요"
                 />
-                {schedule ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: S.md }}>
-                    <div style={{
-                      padding: S.md,
-                      background: C.parchment,
-                      borderRadius: R.md,
-                      border: '1px solid',
-                      borderColor: C.hairline,
-                    }}>
-                      <div style={{
-                        fontSize: T.captionStrong.size,
-                        fontWeight: T.captionStrong.weight,
-                        color: C.ink,
-                        fontFamily: F.family,
-                        letterSpacing: T.captionStrong.tracking,
-                      }}>
-                        현재 대화에서 확인된 일정
-                      </div>
-                      <div style={{
-                        fontSize: T.bodyStrong.size,
-                        fontWeight: T.bodyStrong.weight,
-                        color: C.accent,
-                        fontFamily: F.family,
-                        letterSpacing: T.bodyStrong.tracking,
-                        marginTop: S.xs,
-                      }}>
-                        {schedule.qualification}
-                      </div>
-                    </div>
-
-                    {!calendarConsentAsked ? (
-                      <button
-                        onClick={() => setCalendarConsentAsked(true)}
-                        style={{
-                          padding: `${S.sm}px ${S.md}px`,
-                          background: C.accent,
-                          color: C.white,
-                          border: 'none',
-                          borderRadius: R.pill,
-                          cursor: 'pointer',
-                          fontSize: T.captionStrong.size,
-                          fontWeight: T.captionStrong.weight,
-                          fontFamily: F.family,
-                          letterSpacing: T.captionStrong.tracking,
-                          textTransform: 'uppercase',
-                          boxShadow: '0 1px 3px rgba(0,102,204,0.3)',
-                        }}
-                      >
-                        캘린더 등록 동의 물어보기
-                      </button>
-                    ) : (
-                      <div style={{
-                        padding: S.md,
-                        background: C.parchment,
-                        borderRadius: R.md,
-                        border: '1px solid',
-                        borderColor: C.hairline,
-                      }}>
-                        <p style={{
-                          fontSize: T.caption.size,
-                          color: C.muted,
-                          fontFamily: F.family,
-                          letterSpacing: T.caption.tracking,
-                          lineHeight: 1.5,
-                          margin: 0,
-                        }}>
-                          공식 확정된 일정을 캘린더에 등록할까요?
-                          <br />
-                          (미등록 시 텍스트 일정과 연결 안내로 대체돼요)
-                        </p>
-                        <div style={{ display: 'flex', gap: S.sm, marginTop: S.md }}>
-                          <button
-                            onClick={() => { setCalendarConsent(true); handleCalendarRegister() }}
-                            style={{
-                              padding: `${S.sm}px ${S.md}px`,
-                              background: C.accent,
-                              color: C.white,
-                              border: 'none',
-                              borderRadius: R.pill,
-                              cursor: 'pointer',
-                              fontSize: T.captionStrong.size,
-                              fontWeight: T.captionStrong.weight,
-                              fontFamily: F.family,
-                              letterSpacing: T.captionStrong.tracking,
-                              textTransform: 'uppercase',
-                              boxShadow: '0 1px 3px rgba(0,102,204,0.3)',
-                            }}
-                          >
-                            등록 동의
-                          </button>
-                          <button
-                            onClick={() => { setCalendarConsent(false); setCalendarRegistered(false) }}
-                            style={{
-                              padding: `${S.sm}px ${S.md}px`,
-                              background: C.white,
-                              color: C.ink,
-                              border: '1px solid',
-                              borderColor: C.hairline,
-                              borderRadius: R.pill,
-                              cursor: 'pointer',
-                              fontSize: T.captionStrong.size,
-                              fontWeight: T.captionStrong.weight,
-                              fontFamily: F.family,
-                              letterSpacing: T.captionStrong.tracking,
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            등록 안 함
-                          </button>
-                        </div>
-                        {calendarConsent === true && calendarRegistered === true && (
-                          <div style={{
-                            marginTop: S.sm,
-                            padding: `${S.xs}px ${S.md}px`,
-                            background: '#e8f5e9',
-                            borderRadius: R.sm,
-                            color: '#1b7a3d',
-                            fontSize: T.captionStrong.size,
-                            fontWeight: T.captionStrong.weight,
-                            fontFamily: F.family,
-                            letterSpacing: T.captionStrong.tracking,
-                            border: '1px solid',
-                            borderColor: '#b8e0c0',
-                          }}>
-                            ✓ 동의했어요. 캘린더에 일정이 등록됐어요.
-                          </div>
-                        )}
-                        {calendarConsent === true && calendarRegistered === false && (
-                          <div style={{
-                            marginTop: S.sm,
-                            padding: `${S.xs}px ${S.md}px`,
-                            background: '#fff4e5',
-                            borderRadius: R.sm,
-                            color: '#b85c00',
-                            fontSize: T.captionStrong.size,
-                            fontWeight: T.captionStrong.weight,
-                            fontFamily: F.family,
-                            letterSpacing: T.captionStrong.tracking,
-                            border: '1px solid',
-                            borderColor: '#ffcc80',
-                          }}>
-                            동의했지만 캘린더 연결이 아직 안 됐어요. 캘린더 연결하기를 먼저 진행해 주세요.
-                          </div>
-                        )}
-                        {calendarConsent === false && (
-                          <div style={{
-                            marginTop: S.sm,
-                            padding: `${S.xs}px ${S.md}px`,
-                            background: C.parchment,
-                            borderRadius: R.sm,
-                            color: C.muted2,
-                            fontSize: T.caption.size,
-                            fontFamily: F.family,
-                            letterSpacing: T.caption.tracking,
-                            border: '1px solid',
-                            borderColor: C.hairline,
-                          }}>
-                            등록하지 않기로 했어요. 텍스트 일정과 연결 안내를 제공해요.
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p style={{
-                    fontSize: T.caption.size,
-                    color: C.muted2,
-                    fontFamily: F.family,
-                    letterSpacing: T.caption.tracking,
-                    lineHeight: 1.5,
-                  }}>
-                    먼저 대화에서 특정 자격증 일정을 확인해 주세요.
-                  </p>
-                )}
+                <CalendarRegisterBlock
+                  schedule={schedule}
+                  calendarConsentAsked={calendarConsentAsked}
+                  calendarConsent={calendarConsent}
+                  calendarRegistered={calendarRegistered}
+                  onAskConsent={() => setCalendarConsentAsked(true)}
+                  onConsent={() => { setCalendarConsent(true); handleCalendarRegister() }}
+                  onDecline={() => { setCalendarConsent(false); setCalendarRegistered(false) }}
+                />
               </Card>
 
               {/* 다음 경로 */}
@@ -2245,32 +3050,36 @@ export default function Home() {
                   title="취득 후 다음 경로"
                   subtitle="보유 자격증 갱신 + 추가 취득 방향"
                 />
-                <p style={{
-                  fontSize: T.caption.size,
-                  color: C.muted,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                  lineHeight: 1.6,
-                  margin: 0,
-                }}>
+                <p
+                  style={{
+                    fontSize: tokens.type.caption.size,
+                    color: tokens.colors.inkLight,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.caption.tracking,
+                    lineHeight: 1.6,
+                    margin: 0,
+                  }}
+                >
                   "취득했다"고 직접 말한 경우만 확정해요. 보유 자격증·등급을 확인하고 프로필에 추가(동의 시)해요.
                   <br /><br />
                   기존 자격증과 과도한 중복 후보는 낮추고, 새로운 직무 가치를 더하는 1순위+대안을 제시해요.
                   추가 자격증보다 프로젝트·실무·포트폴리오가 우선인 시점이면 솔직히 말해요.
                 </p>
-                <div style={{
-                  marginTop: S.md,
-                  padding: S.md,
-                  background: C.parchment,
-                  borderRadius: R.md,
-                  border: '1px solid',
-                  borderColor: C.hairline,
-                  fontSize: T.caption.size,
-                  color: C.ink,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                }}>
-                  <strong>예시:</strong>{" "}
+                <div
+                  style={{
+                    marginTop: tokens.spacing.md,
+                    padding: tokens.spacing.md,
+                    background: tokens.colors.parchment,
+                    borderRadius: tokens.radius.md,
+                    border: '1px solid',
+                    borderColor: tokens.colors.hairline,
+                    fontSize: tokens.type.caption.size,
+                    color: tokens.colors.ink,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.caption.tracking,
+                  }}
+                >
+                  <strong>예시:</strong>{' '}
                   "정보처리기사 취득했어" / "SQLD 시험 합격했어" / "다음엔 뭘 따면 좋을까?"
                 </div>
               </Card>
@@ -2281,65 +3090,7 @@ export default function Home() {
                   title="합격/불합격 결과 반영"
                   subtitle="결과 기반 상태 업데이트 + 다음 계획 조정"
                 />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: S.md }}>
-                  <div style={{
-                    padding: S.md,
-                    background: '#e8f5e9',
-                    borderRadius: R.md,
-                    border: '1px solid',
-                    borderColor: '#b8e0c0',
-                  }}>
-                    <div style={{
-                      fontSize: T.captionStrong.size,
-                      fontWeight: T.captionStrong.weight,
-                      color: '#1b7a3d',
-                      fontFamily: F.family,
-                      letterSpacing: T.captionStrong.tracking,
-                      marginBottom: S.xs,
-                    }}>
-                      합격
-                    </div>
-                    <p style={{
-                      fontSize: T.caption.size,
-                      color: C.ink,
-                      fontFamily: F.family,
-                      letterSpacing: T.caption.tracking,
-                      margin: 0,
-                      lineHeight: 1.5,
-                    }}>
-                      보유 자격증 추가, 상태 합격, 다음 자격증 제안
-                    </p>
-                  </div>
-                  <div style={{
-                    padding: S.md,
-                    background: '#fde8e8',
-                    borderRadius: R.md,
-                    border: '1px solid',
-                    borderColor: '#f5c6c6',
-                  }}>
-                    <div style={{
-                      fontSize: T.captionStrong.size,
-                      fontWeight: T.captionStrong.weight,
-                      color: C.danger,
-                      fontFamily: F.family,
-                      letterSpacing: T.captionStrong.tracking,
-                      marginBottom: S.xs,
-                    }}>
-                      불합격
-                    </div>
-                    <p style={{
-                      fontSize: T.caption.size,
-                      color: C.ink,
-                      fontFamily: F.family,
-                      letterSpacing: T.caption.tracking,
-                      margin: 0,
-                      lineHeight: 1.5,
-                    }}>
-                      완료율 가장 낮았던 단계만 말하고, 다음 회차 공식 일정 확인 후 그 단계 비중을 올린 계획을 제안해요.
-                      위로보다 다음 계획을 먼저 제시해요.
-                    </p>
-                  </div>
-                </div>
+                <NextPathBlock />
               </Card>
 
               {/* 유효기간 */}
@@ -2348,51 +3099,57 @@ export default function Home() {
                   title="유효기간 자산 관리"
                   subtitle="보유 자격증 · 영어 성적 등 유효기간 있는 자산 검토"
                 />
-                <p style={{
-                  fontSize: T.caption.size,
-                  color: C.muted,
-                  fontFamily: F.family,
-                  letterSpacing: T.caption.tracking,
-                  lineHeight: 1.6,
-                  margin: 0,
-                }}>
+                <p
+                  style={{
+                    fontSize: tokens.type.caption.size,
+                    color: tokens.colors.inkLight,
+                    fontFamily: tokens.fonts.family,
+                    letterSpacing: tokens.type.caption.tracking,
+                    lineHeight: 1.6,
+                    margin: 0,
+                  }}
+                >
                   사용자가 제공한 취득/만료 시점 + 공식 규정 바탕으로 유효 여부·갱신 시점을 검토해요.
                   사용자가 원하지 않으면 이름·등급 중심으로만 확인하고 유효기간 관리는 진행하지 않아요.
                 </p>
               </Card>
 
-              {/* 취업 가이드라인 */}
+              {/* 취업 가이드라인 (조건부) */}
               {profile.관심공고 && (
                 <Card>
                   <CardHeader
                     title="취업 가이드라인"
                     subtitle="관심 공고 기반 직무 요약 · 필요 역량 · 자격증 연결"
                   />
-                  <div style={{
-                    padding: S.md,
-                    background: '#e8f0fe',
-                    borderRadius: R.md,
-                    border: '1px solid',
-                    borderColor: '#b3d4fc',
-                    fontSize: T.caption.size,
-                    color: C.ink,
-                    fontFamily: F.family,
-                    letterSpacing: T.caption.tracking,
-                    lineHeight: 1.6,
-                  }}>
-                    <div style={{
-                      fontSize: T.smallStrong.size,
-                      fontWeight: T.smallStrong.weight,
-                      color: C.accent,
-                      fontFamily: F.family,
-                      letterSpacing: T.smallStrong.tracking,
-                      textTransform: 'uppercase',
-                      marginBottom: S.sm,
-                    }}>
+                  <div
+                    style={{
+                      padding: tokens.spacing.md,
+                      background: tokens.colors.accentBg,
+                      borderRadius: tokens.radius.md,
+                      border: '1px solid',
+                      borderColor: tokens.colors.accentLight,
+                      fontSize: tokens.type.caption.size,
+                      color: tokens.colors.ink,
+                      fontFamily: tokens.fonts.family,
+                      letterSpacing: tokens.type.caption.tracking,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: tokens.type.smallStrong.size,
+                        fontWeight: tokens.type.smallStrong.weight,
+                        color: tokens.colors.accent,
+                        fontFamily: tokens.fonts.family,
+                        letterSpacing: tokens.type.smallStrong.tracking,
+                        textTransform: 'uppercase',
+                        marginBottom: tokens.spacing.sm,
+                      }}
+                    >
                       관심 공고
                     </div>
                     <div>{profile.관심공고}</div>
-                    <div style={{ marginTop: S.sm, paddingTop: S.sm, borderTop: '1px solid', borderColor: '#b3d4fc' }}>
+                    <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: '1px solid', borderColor: tokens.colors.accentLight }}>
                       → 취업 가이드라인 블록을 조건에 맞게 제공해요.
                     </div>
                   </div>
@@ -2405,173 +3162,16 @@ export default function Home() {
                   title="Notion 학습 공간 연동"
                   subtitle="학습 계획을 Notion 페이지로 생성 (사용자 토큰 기반)"
                 />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: S.md }}>
-                  {!plan ? (
-                    <p style={{
-                      fontSize: T.caption.size,
-                      color: C.muted2,
-                      fontFamily: F.family,
-                      letterSpacing: T.caption.tracking,
-                      lineHeight: 1.5,
-                      margin: 0,
-                    }}>
-                      먼저 대화에서 학습 계획이 만들어져야 해요.
-                    </p>
-                  ) : (
-                    <>
-                      <div style={{
-                        padding: S.md,
-                        background: C.parchment,
-                        borderRadius: R.md,
-                        border: '1px solid',
-                        borderColor: C.hairline,
-                      }}>
-                        <div style={{
-                          fontSize: T.captionStrong.size,
-                          fontWeight: T.captionStrong.weight,
-                          color: C.ink,
-                          fontFamily: F.family,
-                          letterSpacing: T.captionStrong.tracking,
-                        }}>
-                          현재 계획
-                        </div>
-                        <div style={{
-                          fontSize: T.bodyStrong.size,
-                          fontWeight: T.bodyStrong.weight,
-                          color: C.accent,
-                          fontFamily: F.family,
-                          letterSpacing: T.bodyStrong.tracking,
-                          marginTop: S.xs,
-                        }}>
-                          {plan.qualification} · 시험일: {plan.examDate}
-                        </div>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: S.sm }}>
-                        <div>
-                          <label style={{
-                            display: 'block',
-                            fontSize: T.micro.size,
-                            fontWeight: T.micro.weight,
-                            color: C.muted,
-                            fontFamily: F.family,
-                            letterSpacing: T.micro.tracking,
-                            textTransform: 'uppercase',
-                            marginBottom: S.xs,
-                          }}>
-                            Notion 토큰
-                          </label>
-                          <input
-                            type="text"
-                            value={notionToken}
-                            onChange={e => setNotionToken(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: `${S.xs}px ${S.sm}px`,
-                              background: C.white,
-                              border: '1px solid',
-                              borderColor: C.hairline,
-                              borderRadius: R.sm,
-                              fontSize: T.caption.size,
-                              color: C.ink,
-                              fontFamily: F.family,
-                              letterSpacing: T.caption.tracking,
-                              outline: 'none',
-                              boxSizing: 'border-box',
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <label style={{
-                            display: 'block',
-                            fontSize: T.micro.size,
-                            fontWeight: T.micro.weight,
-                            color: C.muted,
-                            fontFamily: F.family,
-                            letterSpacing: T.micro.tracking,
-                            textTransform: 'uppercase',
-                            marginBottom: S.xs,
-                          }}>
-                            부모 페이지 ID
-                          </label>
-                          <input
-                            type="text"
-                            value={notionParentPageId}
-                            onChange={e => setNotionParentPageId(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: `${S.xs}px ${S.sm}px`,
-                              background: C.white,
-                              border: '1px solid',
-                              borderColor: C.hairline,
-                              borderRadius: R.sm,
-                              fontSize: T.caption.size,
-                              color: C.ink,
-                              fontFamily: F.family,
-                              letterSpacing: T.caption.tracking,
-                              outline: 'none',
-                              boxSizing: 'border-box',
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <button
-                        onClick={handleNotionConnect}
-                        disabled={loading}
-                        style={{
-                          padding: `${S.sm}px ${S.md}px`,
-                          background: loading ? C.parchment : C.accent,
-                          color: loading ? C.muted : C.white,
-                          border: 'none',
-                          borderRadius: R.pill,
-                          cursor: loading ? 'default' : 'pointer',
-                          fontSize: T.captionStrong.size,
-                          fontWeight: T.captionStrong.weight,
-                          fontFamily: F.family,
-                          letterSpacing: T.captionStrong.tracking,
-                          textTransform: 'uppercase',
-                          boxShadow: loading ? 'none' : '0 1px 3px rgba(0,102,204,0.3)',
-                          alignSelf: 'flex-start',
-                        }}
-                      >
-                        {loading ? '연동 중…' : 'Notion 학습 공간 만들기'}
-                      </button>
-                      {notionResult && (
-                        <div style={{
-                          padding: S.md,
-                          background: notionResult.type === 'success' ? '#e8f5e9' : (notionResult.type === 'fallback' ? C.parchment : '#fde8e8'),
-                          borderRadius: R.md,
-                          border: '1px solid',
-                          borderColor: notionResult.type === 'success' ? '#b8e0c0' : (notionResult.type === 'fallback' ? C.hairline : '#f5c6c6'),
-                          color: notionResult.type === 'success' ? '#1b7a3d' : (notionResult.type === 'fallback' ? C.muted : C.danger),
-                          fontSize: T.caption.size,
-                          fontFamily: F.family,
-                          letterSpacing: T.caption.tracking,
-                          lineHeight: 1.5,
-                        }}>
-                          {notionResult.message}
-                          {notionResult.url && (
-                            <a
-                              href={notionResult.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                display: 'block',
-                                marginTop: S.sm,
-                                color: C.accent,
-                                fontWeight: T.captionStrong.weight,
-                                textDecoration: 'none',
-                                borderBottom: '1px solid',
-                                borderColor: '#b3d4fc',
-                              }}
-                            >
-                              Notion 페이지 열기 →
-                            </a>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                <NotionBlock
+                  plan={plan}
+                  notionToken={notionToken}
+                  notionParentPageId={notionParentPageId}
+                  notionResult={notionResult}
+                  loading={loading}
+                  onTokenChange={setNotionToken}
+                  onParentPageIdChange={setNotionParentPageId}
+                  onConnect={handleNotionConnect}
+                />
               </Card>
             </div>
           )}
@@ -2580,133 +3180,111 @@ export default function Home() {
 
       {/* 저장 동의 모달 */}
       {shownConsent && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          backdropFilter: 'blur(4px)',
-          padding: S.lg,
-        }}>
-          <div style={{
-            background: C.white,
-            borderRadius: R.lg,
-            padding: `${S.xl}px ${S.lg}px`,
-            width: '100%',
-            maxWidth: 460,
-            boxShadow: SH.modal,
-            border: '1px solid',
-            borderColor: C.hairline,
-          }}>
-            <div style={{
-              fontSize: T.h3.size,
-              fontWeight: T.h3.weight,
-              color: C.ink,
-              fontFamily: F.display,
-              letterSpacing: T.h3.tracking,
-              marginTop: 0,
-              marginBottom: S.md,
-            }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            backdropFilter: 'blur(4px)',
+            padding: tokens.spacing.lg,
+          }}
+        >
+          <div
+            style={{
+              background: tokens.colors.white,
+              borderRadius: tokens.radius.xl,
+              padding: `${tokens.spacing.xl}px ${tokens.spacing.lg}px`,
+              width: '100%',
+              maxWidth: 480,
+              boxShadow: tokens.shadows.modal,
+              border: '1px solid',
+              borderColor: tokens.colors.hairline,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <h2
+              style={{
+                fontSize: tokens.type.h3.size,
+                fontWeight: tokens.type.h3.weight,
+                color: tokens.colors.ink,
+                fontFamily: tokens.fonts.display,
+                letterSpacing: tokens.type.h3.tracking,
+                margin: 0,
+                marginBottom: tokens.spacing.md,
+              }}
+            >
               프로필 저장 동의
-            </div>
-            <p style={{
-              fontSize: T.body.size,
-              color: C.ink,
-              fontFamily: F.family,
-              letterSpacing: T.body.tracking,
-              lineHeight: T.body.lh,
-              margin: 0,
-              marginBottom: S.lg,
-            }}>
+            </h2>
+            <p
+              style={{
+                fontSize: tokens.type.body.size,
+                color: tokens.colors.ink,
+                fontFamily: tokens.fonts.family,
+                letterSpacing: tokens.type.body.tracking,
+                lineHeight: tokens.type.body.lh,
+                margin: 0,
+                marginBottom: tokens.spacing.lg,
+              }}
+            >
               추천을 더 정확하게 맞춤화하려면 프로필 정보를 저장합니다.
               저장 전 동의를 받습니다. 저장된 정보는 로컬 스토리지에만 보관되며, 다른 기기에서는 사용할 수 없습니다.
             </p>
-            <div style={{
-              padding: S.md,
-              background: C.parchment,
-              borderRadius: R.md,
-              border: '1px solid',
-              borderColor: C.hairline,
-              marginBottom: S.lg,
-            }}>
-              <div style={{
-                fontSize: T.micro.size,
-                fontWeight: T.micro.weight,
-                color: C.muted,
-                fontFamily: F.family,
-                letterSpacing: T.micro.tracking,
-                textTransform: 'uppercase',
-                marginBottom: S.sm,
-              }}>
+            <div
+              style={{
+                padding: tokens.spacing.md,
+                background: tokens.colors.parchment,
+                borderRadius: tokens.radius.md,
+                border: '1px solid',
+                borderColor: tokens.colors.hairline,
+                marginBottom: tokens.spacing.lg,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: tokens.type.micro.size,
+                  fontWeight: tokens.type.micro.weight,
+                  color: tokens.colors.muted,
+                  fontFamily: tokens.fonts.family,
+                  letterSpacing: tokens.type.micro.tracking,
+                  textTransform: 'uppercase',
+                  marginBottom: tokens.spacing.sm,
+                }}
+              >
                 현재 저장된 프로필 (없을 수 있음)
               </div>
-              <pre style={{
-                fontSize: T.small.size,
-                background: C.white,
-                color: C.ink,
-                padding: S.md,
-                borderRadius: R.sm,
-                whiteSpace: 'pre-wrap',
-                maxHeight: 160,
-                overflow: 'auto',
-                border: '1px solid',
-                borderColor: C.hairline,
-                fontFamily: F.family,
-                letterSpacing: T.small.tracking,
-                margin: 0,
-              }}>
+              <pre
+                style={{
+                  fontSize: tokens.type.small.size,
+                  background: tokens.colors.white,
+                  color: tokens.colors.ink,
+                  padding: tokens.spacing.md,
+                  borderRadius: tokens.radius.sm,
+                  whiteSpace: 'pre-wrap',
+                  maxHeight: 160,
+                  overflow: 'auto',
+                  border: '1px solid',
+                  borderColor: tokens.colors.hairline,
+                  fontFamily: tokens.fonts.family,
+                  letterSpacing: tokens.type.small.tracking,
+                  margin: 0,
+                }}
+              >
                 {JSON.stringify(profile, null, 2) || '(저장된 프로필 없음)'}
               </pre>
             </div>
-            <div style={{
-              display: 'flex',
-              gap: S.sm,
-              justifyContent: 'flex-end',
-            }}>
-              <button
-                onClick={() => setShownConsent(false)}
-                style={{
-                  padding: `${S.sm}px ${S.md}px`,
-                  fontSize: T.captionStrong.size,
-                  border: '1px solid',
-                  borderColor: C.hairline,
-                  borderRadius: R.pill,
-                  background: C.white,
-                  color: C.ink,
-                  cursor: 'pointer',
-                  fontWeight: T.captionStrong.weight,
-                  fontFamily: F.family,
-                  letterSpacing: T.captionStrong.tracking,
-                  textTransform: 'uppercase',
-                }}
-              >
-                나중에
-              </button>
-              <button
-                onClick={동의후저장}
-                style={{
-                  padding: `${S.sm}px ${S.md}px`,
-                  fontSize: T.captionStrong.size,
-                  backgroundColor: C.accent,
-                  color: C.white,
-                  border: 'none',
-                  borderRadius: R.pill,
-                  cursor: 'pointer',
-                  fontWeight: T.captionStrong.weight,
-                  fontFamily: F.family,
-                  letterSpacing: T.captionStrong.tracking,
-                  textTransform: 'uppercase',
-                  boxShadow: '0 1px 3px rgba(0,102,204,0.3)',
-                }}
-              >
+            <div style={{ display: 'flex', gap: tokens.spacing.sm, justifyContent: 'flex-end' }}>
+              <GhostButton onClick={() => setShownConsent(false)}>나중에</GhostButton>
+              <SolidButton onClick={동의후저장} style={{ boxShadow: tokens.shadows.button }}>
                 저장하고 사용
-              </button>
+              </SolidButton>
             </div>
           </div>
         </div>

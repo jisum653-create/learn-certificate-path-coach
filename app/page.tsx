@@ -18,6 +18,10 @@ interface Profile {
   유효기간자산?: string
 }
 
+type ProfileStringKey = '진로' | '학습방식' | '비용선호' | '예산' | '가용시간' | '목표시기' | '목표회차' | '관심공고' | '영어성적' | '유효기간자산'
+
+type ProfileArrayKey = '보유자격증' | '취득완료자격'
+
 type TabId = 'chat' | 'dashboard' | 'schedule' | 'plan' | 'profile' | 'p1'
 
 interface Message {
@@ -1264,7 +1268,7 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
     setLocal(profile)
   }, [profile])
 
-  const fields = [
+  const fields: { key: ProfileStringKey; label: string; type: 'text' }[] = [
     { key: '진로', label: '진로 / 관심 직무', type: 'text' },
     { key: '학습방식', label: '학습 방식', type: 'text' },
     { key: '비용선호', label: '비용 선호', type: 'text' },
@@ -1277,7 +1281,7 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
     { key: '유효기간자산', label: '유효기간 자산', type: 'text' },
   ]
 
-  const listFields = [
+  const listFields: { key: ProfileArrayKey; label: string }[] = [
     { key: '보유자격증', label: '보유 자격증' },
     { key: '취득완료자격', label: '취득 완료 자격' },
   ]
@@ -1286,14 +1290,14 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
     setLocal(prev => ({ ...prev, [key]: value }))
   }
 
-  const handleListChange = (key: string, value: string) => {
+  const handleListChange = (key: ProfileArrayKey, value: string) => {
     const current = local[key] || []
     const cleaned = value.split(',').map(s => s.trim()).filter(Boolean)
     setLocal(prev => ({ ...prev, [key]: cleaned }))
   }
 
   const handleSave = () => {
-    onSave(local)
+    onSave(local as Profile)
   }
 
   return (
@@ -1368,7 +1372,7 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
               </label>
               <input
                 type="text"
-                value={local[f.key] || ''}
+                value={typeof local[f.key] === 'string' ? local[f.key] : ''}
                 onChange={e => handleChange(f.key, e.target.value)}
                 style={{
                   width: '100%',

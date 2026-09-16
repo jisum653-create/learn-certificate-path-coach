@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
   }
 
   // buildEvent: 파싱 가능한 공식 일정만 이벤트 생성, 불가하면 null 반환
-  const event = buildEvent({ qualification, examDate, examTime: examTime ?? bodyExamTime, eventEndTime })
+  const event = buildEvent({ qualification, examDate, examTime: examTime ?? bodyExamTime, eventEndTime: examEndTime })
   if (!event) {
     return NextResponse.json({
       status: 'unavailable',

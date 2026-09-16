@@ -176,6 +176,70 @@ function saveProfile(p: Profile, 동의: boolean) {
 function clearProfile() {
   localStorage.removeItem('certCoachProfile')
   localStorage.removeItem('certCoachMessages')
+  localStorage.removeItem('certCoachGoal')
+  localStorage.removeItem('certCoachRec')
+  localStorage.removeItem('certCoachSchedule')
+  localStorage.removeItem('certCoachPlan')
+}
+
+function loadGoal(): string | null {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null
+  try {
+    const raw = localStorage.getItem('certCoachGoal')
+    if (!raw) return null
+    return raw as string
+  } catch { return null }
+}
+
+function saveGoal(goal: string | null) {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return
+  if (goal) localStorage.setItem('certCoachGoal', goal)
+  else localStorage.removeItem('certCoachGoal')
+}
+
+function loadStoredRec(): RecResult | null {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null
+  try {
+    const raw = localStorage.getItem('certCoachRec')
+    if (!raw) return null
+    return JSON.parse(raw) as RecResult
+  } catch { return null }
+}
+
+function saveStoredRec(rec: RecResult | null) {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return
+  if (rec) localStorage.setItem('certCoachRec', JSON.stringify(rec))
+  else localStorage.removeItem('certCoachRec')
+}
+
+function loadStoredSchedule(): ScheduleData | null {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null
+  try {
+    const raw = localStorage.getItem('certCoachSchedule')
+    if (!raw) return null
+    return JSON.parse(raw) as ScheduleData
+  } catch { return null }
+}
+
+function saveStoredSchedule(s: ScheduleData | null) {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return
+  if (s) localStorage.setItem('certCoachSchedule', JSON.stringify(s))
+  else localStorage.removeItem('certCoachSchedule')
+}
+
+function loadStoredPlan(): PlanData | null {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null
+  try {
+    const raw = localStorage.getItem('certCoachPlan')
+    if (!raw) return null
+    return JSON.parse(raw) as PlanData
+  } catch { return null }
+}
+
+function saveStoredPlan(p: PlanData | null) {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return
+  if (p) localStorage.setItem('certCoachPlan', JSON.stringify(p))
+  else localStorage.removeItem('certCoachPlan')
 }
 
 // ---------- API 호출 ----------
@@ -2409,9 +2473,10 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>(loadMessages)
   const [input, setInput] = useState('')
   const [profile, setProfile] = useState<Profile>(loadProfile())
-  const [rec, setRec] = useState<RecResult | null>(null)
-  const [schedule, setSchedule] = useState<ScheduleData | null>(null)
-  const [plan, setPlan] = useState<PlanData | null>(null)
+  const [goalStandard, setGoalStandard] = useState<string | null>(loadGoal)
+  const [rec, setRec] = useState<RecResult | null>(loadStoredRec)
+  const [schedule, setSchedule] = useState<ScheduleData | null>(loadStoredSchedule)
+  const [plan, setPlan] = useState<PlanData | null>(loadStoredPlan)
   const [loading, setLoading] = useState(false)
   const [shownConsent, setShownConsent] = useState(false)
   const [calendarConsentAsked, setCalendarConsentAsked] = useState(false)
@@ -2460,21 +2525,41 @@ export default function Home() {
     try {
       const res = await postJson('/api/recommend', { profile, message: text })
       if (res.type === 'question') {
-        const q = (res.questions || []).map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')
+        const q = (res.questions || []).map((q: string, i: number) => `${i + 1}. ${q}`).join('\\n')
         setMessages(prev => [...prev, { role: 'bot', text: q || '더 필요한 정보가 없어요. 추천할 준비가 되었어요.', meta: 'question' }])
         if (res.profileUpdate) {
           setProfile(prev => ({ ...prev, ...res.profileUpdate }))
         }
       } else if (res.recommendation) {
         setRec(res.recommendation)
+        // 목표 확정 자격증 업데이트 (recResult 대비 호환)
+        const goal = (res.result && (res.result as any).primary?.name) || goalStandard
+        if (goal && goal !== goalStandard) {
+          setGoalStandard(goal)
+          saveGoal(goal)
+          // 이전 목표의 저장 데이터 정리
+          saveStoredRec(null)
+          saveStoredSchedule(null)
+          saveStoredPlan(null)
+        }
+        // 저장동의 시 대시보드 데이터 저장
+        if (profile.저장동의 === true) {
+          saveStoredRec(res.recommendation)
+        }
         const ok = profile.저장동의 !== true
         if (ok) setShownConsent(true)
         setMessages(prev => [...prev, { role: 'bot', text: '자격증 추천을 준비했어요. 아래 대시보드에서 결과를 확인할 수 있어요.', meta: 'done' }])
       } else if (res.schedule) {
         setSchedule(res.schedule)
+        if (profile.저장동의 === true) {
+          saveStoredSchedule(res.schedule)
+        }
         setMessages(prev => [...prev, { role: 'bot', text: '공식 시험 일정 정보를 가져왔어요. 아래 일정 탭에서 확인해요.', meta: 'done' }])
       } else if (res.plan) {
         setPlan(res.plan)
+        if (profile.저장동의 === true) {
+          saveStoredPlan(res.plan)
+        }
         setMessages(prev => [...prev, { role: 'bot', text: '학습 계획 미리보기를 만들었어요. 아래 계획 탭에서 확인해요. 준비 시작을 원하면 프로필 탭에서 저장 후 진행해요.', meta: 'done' }])
       } else if (res.type === 'result') {
         setMessages(prev => [...prev, { role: 'bot', text: res.result?.message || res.message || '결과를 확인했어요.', meta: 'done' }])
@@ -2990,7 +3075,7 @@ export default function Home() {
                 <Card>
                   <CardHeader
                     title="대시보드"
-                    subtitle="대화에서 자격증 추천을 요청하면 여기에 결과가 모여요"
+                    subtitle={goalStandard ? `${goalStandard} 관련 추천·일정·계획을 여기에 보여드려요` : '대화에서 자격증 추천을 요청하면 여기에 결과가 모여요'}
                   />
                   <div
                     style={{
@@ -3025,9 +3110,51 @@ export default function Home() {
             </div>
           )}
 
-          {tab === 'schedule' && <CalendarWidget schedule={schedule} />}
+          {tab === 'schedule' && (
+            schedule ? (
+              <CalendarWidget schedule={schedule} isMobile={isMobile} />
+            ) : goalStandard ? (
+              <Card>
+                <CardHeader
+                  title={`${goalStandard} 시험 일정`}
+                  subtitle="아직 일정이 로드되지 않았어요. 대화에서 '시험 일정 알려줘'라고 말하면 확인할 수 있어요."
+                />
+                <p style={{ fontSize: tokens.type.body.size, color: tokens.colors.muted, fontFamily: tokens.fonts.family, margin: 0 }}>
+                  대화창에 "{"{goalStandard} 시험 일정 알려줘"}"라고 입력해 보세요.
+                </p>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader title="시험 일정" subtitle="시험 일정을 확인할 자격증명을 먼저 정해 주세요" />
+                <p style={{ fontSize: tokens.type.body.size, color: tokens.colors.muted, fontFamily: tokens.fonts.family, margin: 0 }}>
+                  채팅에서 "정보처리기사 시험 일정 알려줘"처럼 자격증명을 말하면 일정이 여기에 표시돼요.
+                </p>
+              </Card>
+            )
+          )}
 
-          {tab === 'plan' && <PlanWidget plan={plan} />}
+          {tab === 'plan' && (
+            plan ? (
+              <PlanWidget plan={plan} isMobile={isMobile} />
+            ) : goalStandard ? (
+              <Card>
+                <CardHeader
+                  title={`${goalStandard} 학습 계획`}
+                  subtitle="아직 계획이 로드되지 않았어요. 대화에서 '학습 계획 세워줘'라고 말하면 만들 수 있어요."
+                />
+                <p style={{ fontSize: tokens.type.body.size, color: tokens.colors.muted, fontFamily: tokens.fonts.family, margin: 0 }}>
+                  대화창에 "{"{goalStandard} 학습 계획 세워줘"}"라고 입력해 보세요.
+                </p>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader title="학습 계획" subtitle="학습 계획을 세울 자격증명을 먼저 정해 주세요" />
+                <p style={{ fontSize: tokens.type.body.size, color: tokens.colors.muted, fontFamily: tokens.fonts.family, margin: 0 }}>
+                  채팅에서 "빅데이터분석기사 학습 계획 세워줘"처럼 말하면 계획이 여기에 표시돼요.
+                </p>
+              </Card>
+            )
+          )}
 
           {tab === 'profile' && <ProfileWidget profile={profile} onSave={setProfile} isMobile={isMobile} />}
 

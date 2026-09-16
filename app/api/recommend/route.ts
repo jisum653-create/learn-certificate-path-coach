@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { recommend, Profile, RecommendationCandidate } from '../../lib/recommend'
 import { getQualificationSchedule, ScheduleItem } from '../../lib/qualification-extract'
-import { QUALIFICATION_DETAIL_URLS } from '../../lib/reference-data'
+import { QUALIFICATION_DETAIL_URLS, QUALIFICATION_URLS } from '../../lib/reference-data'
 import { webResearch, buildResearchContext } from '../../lib/service-search'
 
 /**
@@ -81,6 +81,25 @@ export async function POST(req: NextRequest) {
   // 3. 프로필 기반 추천 후보 필터링 + 순위 매김
   const candidates = recommend(profile, message)
 
+  // 디버깅: 후보 산정 근거 로그
+  console.log('[recommend/DEBUG] 프로필:', JSON.stringify({
+    진로: profile.진로,
+    보유자격증: profile.보유자격증,
+    학습방식: profile.학습방식,
+    비용선호: profile.비용선호,
+    가용시간: profile.가용시간,
+    목표시기: profile.목표시기,
+    관심공고: profile.관심공고,
+  }))
+  console.log('[recommend/DEBUG] body 전체:', JSON.stringify(body))
+  console.log('[recommend/DEBUG] 후보 수:', candidates.length)
+  if (candidates.length > 0) {
+    console.log('[recommend/DEBUG] 상위 후보:', candidates.slice(0,5).map(c => ({ name: c.자격증명, score: c.score, reasons: c.reasons.slice(0,2) })))
+  } else {
+    console.log('[recommend/DEBUG] QUALIFICATION_URLS 키 수:', Object.keys(QUALIFICATION_URLS).length)
+    console.log('[recommend/DEBUG] QUALIFICATION_URLS keys:', Object.keys(QUALIFICATION_URLS).slice(0,10))
+  }
+
   if (candidates.length === 0) {
     return NextResponse.json({
       type: 'recommend',
@@ -127,12 +146,60 @@ export async function POST(req: NextRequest) {
   // 6. 공식 URL 정보
   const detailInfo = QUALIFICATION_DETAIL_URLS[primary.자격증명]
 
+  // 5b. 프론트 dashboard용 추천 결과 (RecResult 호환)
+  const usedInfoList = [
+    `프로필: 진로(${profile.진로 || '미설정'}), 보유자격증(${(profile.보유자격증 || []).join(', ') || '없음'}), 학습방식(${profile.학습방식 || '미설정'}), 비용선호(${profile.비용선호 || '미설정'}), 가용시간(${profile.가용시간 || '미설정'}), 목표시기(${profile.목표시기 || '미설정'})`,
+    `공식 URL 참조표: ${detailInfo?.detail || '참조표 미등록'}`,
+    examConfirmed ? 'web_extract(Jina Reader/cheerio)로 공식 원문 확인 완료' : '공식 일정 미발표 — web_extract로 재확인 필요',
+    detailInfo ? `공식 상세 페이지: ${detailInfo.detail}` : '',
+    researchOutput && researchOutput.search?.error
+      ? `⚠ 웹 리서치 경고: ${researchOutput.search.error}`
+      : researchOutput
+        ? `웹 리서치 수행: ${researchOutput.query} (출처: ${researchOutput.search?.source || '없음'}, 추출 페이지: ${researchOutput.pages?.length || 0})`
+        : '웹 리서치 미수행 (검색 쿼리 없음)',
+  ].filter(Boolean);
+
+  const prepRange = scheduleItems.length > 0
+    ? `접수 ${scheduleItems.find(i => i.label === '접수 시작')?.value || '미정'} · 시험 ${scheduleItems.find(i => i.label === '시험일')?.value || '미정'}`
+    : '공식 일정 확인 필요';
+
+  const recommendation = {
+    primary: {
+      name: primary.자격증명,
+      reason: primary.reasons.slice(0,2).join('. ') + '.',
+      prepRange,
+      caution: primary.caution || '',
+    },
+    alternatives,
+    path: {
+      basic: {
+        lecture: '공식 강의·학습자료는 자격증 상세 페이지에서 확인',
+        examMaterial: '공식 기출문제·자료실 참조',
+        textbook: '공식 교재 확인 권장',
+        estimatedCost: examConfirmed
+          ? (scheduleItems.find(i => i.label === '응시료')?.value || '응시료 미확인')
+          : '응시료 미확인 (공식 응시료 페이지 확인 필요)',
+        reason: learningPath.note,
+      },
+    },
+    usedInfo: usedInfoList,
+    guideline: jobGuideline
+      ? {
+          jobSummary: jobGuideline.note || '',
+          requiredSkills: '',
+          certConnection: `${jobGuideline.qualification} 자격과 관심 직무·공고 연결`,
+          portfolio: '',
+          referencePosts: '',
+        }
+      : undefined,
+  };
+
   return NextResponse.json({
     type: 'recommend',
     result: {
       primary: {
         name: primary.자격증명,
-        reason: primary.reasons.slice(0, 2).join('. ') + '.',
+        reason: primary.reasons.slice(0,2).join('. ') + '.',
         caution: primary.caution,
         detailUrl: detailInfo?.detail || undefined,
         scheduleUrl: detailInfo?.schedule || undefined,
@@ -142,21 +209,12 @@ export async function POST(req: NextRequest) {
       alternatives,
       path: learningPath,
       jobGuideline,
-      usedInfo: [
-        `프로필: 진로(${profile.진로 || '미설정'}), 보유자격증(${(profile.보유자격증 || []).join(', ') || '없음'}), 학습방식(${profile.학습방식 || '미설정'}), 비용선호(${profile.비용선호 || '미설정'}), 가용시간(${profile.가용시간 || '미설정'}), 목표시기(${profile.목표시기 || '미설정'})`,
-        `공식 URL 참조표: ${detailInfo?.detail || '참조표 미등록'}`,
-        examConfirmed ? 'web_extract(Jina Reader/cheerio)로 공식 원문 확인 완료' : '공식 일정 미발표 — web_extract로 재확인 필요',
-        detailInfo ? `공식 상세 페이지: ${detailInfo.detail}` : '',
-        researchOutput && researchOutput.search?.error
-          ? `⚠ 웹 리서치 경고: ${researchOutput.search.error}`
-          : researchOutput
-            ? `웹 리서치 수행: ${researchOutput.query} (출처: ${researchOutput.search?.source || '없음'}, 추출 페이지: ${researchOutput.pages?.length || 0})`
-            : '웹 리서치 미수행 (검색 쿼리 없음)',
-      ].filter(Boolean),
+      usedInfo: usedInfoList,
       researchContext: researchContext || undefined,
     },
+    recommendation,
     message: profile.진로
-      ? `${primary.자격증명}을(를) 1순위로 추천해요. ${primary.reasons.slice(0,2).join('. ')}. 공식 URL: ${detailInfo?.detail || '참조표 확인 필요'}${researchContext ? '\n\n[웹 리서치]' + researchContext : ''}`
+      ? `${primary.자격증명}을(를) 1순위로 추천해요. ${primary.reasons.slice(0,2).join('. ')}. 공식 URL: ${detailInfo?.detail || '참조표 확인 필요'}`
       : '프로필 정보를 알려주시면 조건에 맞는 1순위+대안 자격증을 추천해요.',
   })
 }

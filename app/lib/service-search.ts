@@ -251,11 +251,15 @@ async function visitUrl(url: string, extractedAt: string): Promise<ExtractedPage
   // 1. Jina Reader 시도 (API 키 불필요)
   const jinaContent = await readUrlWithJina(url);
   if (jinaContent) {
-    content = jinaContent;
-    method = 'jina';
-    const firstLine = jinaContent.split('\n')[0];
-    const m = firstLine.match(/Content from: (.+)/);
-    if (m) title = m[1];
+    // 봇 차단/유의미한 콘텐츠 부재 판정: 차단 안내 문구가 있으면 Jina 결과를 버림
+    const blocked = isBlockedPage(jinaContent);
+    if (!blocked) {
+      content = jinaContent;
+      method = 'jina';
+      const firstLine = jinaContent.split('\n')[0];
+      const m = firstLine.match(/Content from: (.+)/);
+      if (m) title = m[1];
+    }
   }
 
   // 2. Jina Reader 실패 시 extract.ts (cheerio/fetch)
@@ -310,4 +314,32 @@ export function buildResearchContext(output: WebResearchOutput): string {
   }
 
   return parts.join('\n');
+}
+
+/** 봇 차단/유의미한 콘텐츠 부재 판정
+ * Jina Reader 결과가 차단 안내 페이지에 불과한지 확인
+ * dataq.or.kr 계열에서 Observed된 차단 패턴 기반
+ */
+function isBlockedPage(content: string): boolean {
+  if (!content || content.length < 100) return true;
+  const lower = content.toLowerCase();
+  // dataq 개발자도구 감지 페이지 패턴
+  const blockedPhrases = [
+    '개발자도구감지',
+    '개발자 도구 감지',
+    '브라우저 개발자 도구를 닫고 이용해주세요',
+    '개발자 도구를 닫고',
+    '차단 안내',
+    '접근이 차단',
+  ];
+  for (const phrase of blockedPhrases) {
+    if (lower.includes(phrase)) return true;
+  }
+  // Jina 리더의 캐시 스냅샷 경고만으로는 차단이라 보기 어려우나,
+  // 콘텐츠가 실질적으로 비어있거나 이미지 블록만 있으면 제외
+  const imageBlockOnly = content.match(/^!\[image/i);
+  if (imageBlockOnly && content.replace(/^!\[image[^\n]*/g, '').trim().length < 80) {
+    return true;
+  }
+  return false;
 }

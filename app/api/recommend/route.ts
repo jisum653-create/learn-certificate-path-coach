@@ -3,6 +3,7 @@ import { recommend, Profile, RecommendationCandidate } from '../../lib/recommend
 import { getQualificationSchedule, ScheduleItem } from '../../lib/qualification-extract'
 import { QUALIFICATION_DETAIL_URLS, QUALIFICATION_URLS } from '../../lib/reference-data'
 import { webResearch, buildResearchContext } from '../../lib/service-search'
+import { classifyIntent } from '../../lib/intent'
 
 /**
  * 프로필·메시지 기반으로 웹 리서치 검색 쿼리 생성
@@ -45,6 +46,35 @@ export async function POST(req: NextRequest) {
   const profile = body.profile as Profile | undefined
   const message = (body.message as string) || ''
 
+  const intentResult = classifyIntent(message, profile || {})
+
+  // 초기화
+  if (intentResult.intent === 'reset') {
+    return NextResponse.json({
+      type: 'result',
+      result: { kind: 'reset' },
+      message: intentResult.message,
+      profileUpdate: { 메시지: '초기화 요청' },
+    })
+  }
+
+  // 대화 기록 삭제
+  if (intentResult.intent === 'delete') {
+    return NextResponse.json({
+      type: 'result',
+      result: { kind: 'delete' },
+      message: intentResult.message,
+    })
+  }
+
+  // 그 외 답변만 필요한 의도(잡담/안내) — 프로필 없어도 가능
+  if (intentResult.intent === 'reply') {
+    return NextResponse.json({
+      type: 'reply',
+      message: intentResult.message,
+    })
+  }
+
   // 1. 프로필 없으면 추천 불가
   if (!profile) {
     return NextResponse.json({
@@ -52,6 +82,137 @@ export async function POST(req: NextRequest) {
       result: null,
       message: '프로필 정보를 알려주시면 조건에 맞는 1순위+대안 자격증을 추천해요.',
       usedInfo: ['프로필 미설정 — 추천 후보 없음'],
+    })
+  }
+
+  // 합격/취득 결과
+  if (intentResult.intent === 'passed') {
+    const target = intentResult.goalStandard
+      ?? intentResult.certMentions.length > 0
+        ? intentResult.certMentions[0].standard
+        : null
+
+    const update: Partial<Profile> = {
+      메시지: '합격/취득 결과 반영',
+      취득완료자격: [...(profile.취득완료자격 || []), ...(target ? [target] : [])],
+    }
+    if (target && !(profile.보유자격증 || []).includes(target)) {
+      update.보유자격증 = [...(profile.보유자격증 || []), target]
+    }
+
+    return NextResponse.json({
+      type: 'result',
+      result: {
+        kind: 'passed',
+        qualification: target,
+        message: target
+          ? `${target} 합격/취득을 반영했어요. 필요하면 다음 자격증도 함께 볼게요.`
+          : '합격/취득한 자격증명을 함께 말해 주면 반영할게요.',
+      },
+      profileUpdate: update,
+    })
+  }
+
+  // 목표 변경
+  if (intentResult.intent === 'change-goal') {
+    const target = intentResult.goalStandard
+      ?? intentResult.certMentions.length > 0
+        ? intentResult.certMentions[0].standard
+        : null
+
+    return NextResponse.json({
+      type: 'result',
+      result: {
+        kind: 'changed',
+        qualification: target,
+        message: target
+          ? `목표 자격증을 ${target}으로 바꿔서 다시 살펴볼게요. 필요하면 학습 계획도 함께 볼 수 있어요.`
+          : '바꾸고 싶은 자격증명을 말해 주세요.',
+      },
+      profileUpdate: {
+        메시지: '목표 변경 요청',
+        목표자격: target,
+      },
+    })
+  }
+
+  // 시험 일정
+  if (intentResult.intent === 'schedule') {
+    const q = intentResult.goalStandard
+      ?? intentResult.certMentions.length > 0
+        ? intentResult.certMentions[0].standard
+        : null
+
+    if (!q) {
+      return NextResponse.json({
+        type: 'reply',
+        message: '어떤 자격증의 시험 일정을 알려드릴까요? (예: 빅데이터분석기사 시험 일정 알려줘)',
+      })
+    }
+
+    let items: ScheduleItem[]
+    try {
+      items = await getQualificationSchedule(q)
+    } catch {
+      items = [
+        { label: '접수 시작', value: '미확인 — 추출 오류', source: QUALIFICATION_URLS[q] || '', note: '공식 일정 재확인 필요' },
+        { label: '시험일', value: '미확인 — 추출 오류', source: QUALIFICATION_URLS[q] || '', note: '공식 일정 재확인 필요' },
+        { label: '응시료', value: '미확인', source: QUALIFICATION_URLS[q] || '' },
+        { label: '공식 접수 페이지', value: QUALIFICATION_URLS[q] || '', source: '주관기관 공식 웹사이트' },
+      ]
+    }
+
+    return NextResponse.json({
+      type: 'schedule',
+      schedule: {
+        qualification: q,
+        items,
+        sourceNote: items.length > 0 ? `출처: ${items.find(i => i.source)?.source || '공식 홈페이지'}` : '',
+      },
+      message: ` ${q} 시험 일정을 가져왔어요.`,
+    })
+  }
+
+  // 학습 계획
+  if (intentResult.intent === 'plan') {
+    const q = intentResult.goalStandard
+      ?? intentResult.certMentions.length > 0
+        ? intentResult.certMentions[0].standard
+        : null
+
+    if (!q) {
+      return NextResponse.json({
+        type: 'reply',
+        message: '학습 계획을 세울 자격증명을 함께 말해 주세요. (예: 빅데이터분석기사 준비 시작할래)',
+      })
+    }
+
+    let items: ScheduleItem[]
+    try {
+      items = await getQualificationSchedule(q)
+    } catch {
+      items = []
+    }
+
+    const plan = buildPlanFromQualification(q, items, profile)
+
+    return NextResponse.json({
+      type: 'plan',
+      plan,
+      message: ` ${q} 학습 계획을 세웠어요.`,
+    })
+  }
+
+  // 프로필 반영/보완
+  if (intentResult.intent === 'profile') {
+    const update: Partial<Profile> = { 메시지: '프로필 조건 반영 요청' }
+    if (intentResult.certMentions.length > 0) {
+      update.메시지 = `프로필 반영 요청 (언급 자격증: ${intentResult.certMentions.map(m => m.standard).join(', ')})`
+    }
+    return NextResponse.json({
+      type: 'profile',
+      profileUpdate: update,
+      message: '프로필 조건을 반영했어요. 필요하면 자격증 추천도 다시 볼 수 있어요.',
     })
   }
 
@@ -217,4 +378,15 @@ export async function POST(req: NextRequest) {
       ? `${primary.자격증명}을(를) 1순위로 추천해요. ${primary.reasons.slice(0,2).join('. ')}. 공식 URL: ${detailInfo?.detail || '참조표 확인 필요'}`
       : '프로필 정보를 알려주시면 조건에 맞는 1순위+대안 자격증을 추천해요.',
   })
+}
+
+function buildPlanFromQualification(q: string, items: ScheduleItem[], profile: Profile): any {
+  return {
+    qualification: q,
+    schedule: items,
+    studyPlan: {
+      totalWeeks: 12,
+      note: '공식 시험 일정 확인 후 세부 계획 확정',
+    },
+  }
 }

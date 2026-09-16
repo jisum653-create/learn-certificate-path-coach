@@ -2532,19 +2532,38 @@ export default function Home() {
         }
       } else if (res.recommendation) {
         setRec(res.recommendation)
-        // 목표 확정 자격증 업데이트 (recResult 대비 호환)
-        const goal = (res.result && (res.result as any).primary?.name) || goalStandard
-        if (goal && goal !== goalStandard) {
-          setGoalStandard(goal)
-          saveGoal(goal)
-          // 이전 목표의 저장 데이터 정리
+        // 목표 변경/합격/계획 생성 시에만 목표 설정, 단순 추천은 목표 저장 안 함
+        if (res.result?.kind === 'changed' && res.result?.qualification) {
+          const newGoal = res.result.qualification
+          setGoalStandard(newGoal)
+          saveGoal(newGoal)
+          saveStoredRec(null)
+          saveStoredSchedule(null)
+          saveStoredPlan(null)
+        } else if (res.result?.kind === 'passed' && res.result?.qualification) {
+          // 합격 반영 시 목표가 바뀌었으면 목표 업데이트
+          const passedCert = res.result.qualification
+          if (passedCert && passedCert !== goalStandard) {
+            setGoalStandard(passedCert)
+            saveGoal(passedCert)
+            saveStoredRec(null)
+            saveStoredSchedule(null)
+            saveStoredPlan(null)
+          }
+        } else if (res.type === 'plan' && res.plan?.qualification && res.plan.qualification !== goalStandard) {
+          // 계획 생성 시 목표 설정
+          const planGoal = res.plan.qualification
+          setGoalStandard(planGoal)
+          saveGoal(planGoal)
           saveStoredRec(null)
           saveStoredSchedule(null)
           saveStoredPlan(null)
         }
-        // 저장동의 시 대시보드 데이터 저장
+        // 저장동의가 있으면 저장 (나중에 동의한 경우에도 현재 결과 저장)
         if (profile.저장동의 === true) {
-          saveStoredRec(res.recommendation)
+          if (res.recommendation) saveStoredRec(res.recommendation)
+          if (res.schedule) saveStoredSchedule(res.schedule)
+          if (res.plan) saveStoredPlan(res.plan)
         }
         const ok = profile.저장동의 !== true
         if (ok) setShownConsent(true)
@@ -2562,12 +2581,58 @@ export default function Home() {
         }
         setMessages(prev => [...prev, { role: 'bot', text: '학습 계획 미리보기를 만들었어요. 아래 계획 탭에서 확인해요. 준비 시작을 원하면 프로필 탭에서 저장 후 진행해요.', meta: 'done' }])
       } else if (res.type === 'result') {
-        setMessages(prev => [...prev, { role: 'bot', text: res.result?.message || res.message || '결과를 확인했어요.', meta: 'done' }])
-        if (res.profileUpdate) {
-          setProfile(prev => ({ ...prev, ...res.profileUpdate }))
+        // 초기화
+        if (res.result?.kind === 'reset') {
+          clearProfile()
+          setMessages([])
+          setRec(null)
+          setSchedule(null)
+          setPlan(null)
+          setGoalStandard(null)
+          saveGoal(null)
+          setMessages(prev => [...prev, { role: 'bot', text: res.message || '초기화했어요. 처음부터 다시 시작할 수 있어요.', meta: 'done' }])
         }
-        if (res.recommendation) {
-          setRec(res.recommendation)
+        // 대화 기록 삭제
+        else if (res.result?.kind === 'delete') {
+          setMessages([])
+          setMessages(prev => [...prev, { role: 'bot', text: res.message || '대화 기록을 삭제했어요.', meta: 'done' }])
+        }
+        // 합격/취득 반영
+        else if (res.result?.kind === 'passed') {
+          if (res.profileUpdate) {
+            setProfile(prev => ({ ...prev, ...res.profileUpdate }))
+          }
+          const passedCert = res.result?.qualification
+          if (passedCert && passedCert !== goalStandard) {
+            setMessages(prev => [...prev, { role: 'bot', text: res.result?.message || res.message || `${passedCert} 합격/취득을 반영했어요. 필요하면 목표도 변경할 수 있어요.`, meta: 'done' }])
+          } else {
+            setMessages(prev => [...prev, { role: 'bot', text: res.result?.message || res.message || '합격/취득을 반영했어요.', meta: 'done' }])
+          }
+        }
+        // 목표 변경
+        else if (res.result?.kind === 'changed') {
+          const newGoal = res.result?.qualification
+          if (newGoal) {
+            setGoalStandard(newGoal)
+            saveGoal(newGoal)
+            saveStoredRec(null)
+            saveStoredSchedule(null)
+            saveStoredPlan(null)
+          }
+          if (res.profileUpdate) {
+            setProfile(prev => ({ ...prev, ...res.profileUpdate }))
+          }
+          setMessages(prev => [...prev, { role: 'bot', text: res.result?.message || res.message || '목표를 변경했어요.', meta: 'done' }])
+        }
+        // 일반 결과
+        else {
+          setMessages(prev => [...prev, { role: 'bot', text: res.result?.message || res.message || '결과를 확인했어요.', meta: 'done' }])
+          if (res.profileUpdate) {
+            setProfile(prev => ({ ...prev, ...res.profileUpdate }))
+          }
+          if (res.recommendation) {
+            setRec(res.recommendation)
+          }
         }
       } else if (res.type === 'nextpath') {
         setMessages(prev => [...prev, { role: 'bot', text: res.nextPath?.note || res.message || '다음 경로를 검토했어요.', meta: 'done' }])

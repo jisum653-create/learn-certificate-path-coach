@@ -493,14 +493,15 @@ function CalendarWidget({ schedule, isMobile }: { schedule: ScheduleData | null;
               alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: tokens.spacing.sm,
+              gap: isMobile ? tokens.spacing.sm : tokens.spacing.md,
             }}
           >
             <button
               onClick={prevMonth}
               aria-label="이전 달"
               style={{
-                width: 34,
-                height: 34,
+                width: isMobile ? 30 : 34,
+                height: isMobile ? 30 : 34,
                 background: tokens.colors.parchment,
                 border: 'none',
                 borderRadius: tokens.radius.pill,
@@ -525,6 +526,8 @@ function CalendarWidget({ schedule, isMobile }: { schedule: ScheduleData | null;
                 color: tokens.colors.ink,
                 fontFamily: tokens.fonts.display,
                 letterSpacing: tokens.type.bodyStrong.tracking,
+                flex: 1,
+                textAlign: 'center',
               }}
             >
               {monthLabel}
@@ -533,8 +536,8 @@ function CalendarWidget({ schedule, isMobile }: { schedule: ScheduleData | null;
               onClick={nextMonth}
               aria-label="다음 달"
               style={{
-                width: 34,
-                height: 34,
+                width: isMobile ? 30 : 34,
+                height: isMobile ? 30 : 34,
                 background: tokens.colors.parchment,
                 border: 'none',
                 borderRadius: tokens.radius.pill,
@@ -570,11 +573,11 @@ function CalendarWidget({ schedule, isMobile }: { schedule: ScheduleData | null;
                   key={d}
                   style={{
                     textAlign: 'center',
-                    fontSize: tokens.type.small.size,
+                    fontSize: isMobile ? tokens.type.small.size : tokens.type.small.size,
                     fontWeight: tokens.type.smallStrong.weight,
                     color: tokens.colors.muted,
                     fontFamily: tokens.fonts.family,
-                    padding: tokens.spacing.xs,
+                    padding: isMobile ? tokens.spacing.xs : tokens.spacing.xs,
                     letterSpacing: tokens.type.small.tracking,
                     lineHeight: 1.2,
                   }}
@@ -589,12 +592,12 @@ function CalendarWidget({ schedule, isMobile }: { schedule: ScheduleData | null;
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: 2,
+                gap: isMobile ? 0 : 2,
                 backgroundColor: tokens.colors.white,
                 borderRadius: tokens.radius.md,
                 border: '1px solid',
                 borderColor: tokens.colors.hairline,
-                padding: tokens.spacing.xs,
+                padding: isMobile ? tokens.spacing.xs : tokens.spacing.xs,
               }}
             >
               {cells.map((day, idx) => {
@@ -1175,7 +1178,7 @@ function PlanWidget({ plan, isMobile }: { plan: PlanData | null; isMobile?: bool
                 fontWeight: tokens.type.caption.weight,
                 opacity: 0.85,
                 display: 'block',
-                marginTop: tokens.spacing.xs,
+                marginTop: isMobile ? tokens.spacing.sm : tokens.spacing.xs,
               }}
             >
               가장 가까운 마감: {plan.briefing.deadline}

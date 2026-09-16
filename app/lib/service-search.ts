@@ -290,8 +290,6 @@ export async function webResearch(
   return { query, search: searchResult, pages, extractedAt };
 }
 
-}
-
 /** 웹 리서치 + Solar 프롬프트용 텍스트 조립 */
 export function buildResearchContext(output: WebResearchOutput): string {
   const parts: string[] = [];

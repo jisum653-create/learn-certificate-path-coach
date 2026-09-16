@@ -15,12 +15,6 @@ const DEFAULT_EXAM_DATE = '2026년 하반기 (공식 일정 확인 필요)'
 const DEFAULT_LOCATION = '시험장 (공식 발표 시 확정)'
 const DEFAULT_DESCRIPTION = '자격증 패스 코치가 확인한 공식 확정 일정이에요.\n문의: 시험 주관기관 공식 홈페이지'
 
-function parseExamDate(examDateRaw: string): string {
-  // "2026년 하반기" 같은 넓은 표현은 그대로 제목에만 쓰고,
-  // 실제 시간 특정이 안 되면 기본 날짜로 이벤트 생성
-  return DEFAULT_EXAM_DATE
-}
-
 function buildEvent({
   qualification,
   examDate,
@@ -32,9 +26,30 @@ function buildEvent({
   eventTime?: string
   eventEndTime?: string
 }) {
-  // 시험 당일 시간 지정 가능하면 ISO 시간 사용, 없으면 하루 종일 이벤트
-  const startTime = eventTime ?? '2026-07-01T09:00:00+09:00'
-  const endTime = eventEndTime ?? '2026-07-01T12:00:00+09:00'
+  // 시험일 파싱: "YYYY년 MM월 DD일" 또는 "YYYY-MM-DD" 또는 "YYYY.MM.DD" 형식
+  const parseExamDate = (raw: string): { year: number; month: number; day: number } | null => {
+    if (!raw || raw === '공식 일정 확인 필요' || raw === DEFAULT_EXAM_DATE) return null
+    let m: RegExpMatchArray | null
+    if ((m = raw.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/))) {
+      return { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) }
+    }
+    if ((m = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) {
+      return { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) }
+    }
+    if ((m = raw.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/))) {
+      return { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) }
+    }
+    return null
+  }
+
+  const parsed = parseExamDate(examDate)
+  // 시험 당일 시간 지정 가능하면 ISO 시간 사용, 없으면 파싱된 시험일 09:00-12:00
+  const baseDate = parsed
+    ? `${parsed.year}-${String(parsed.month).padStart(2, '0')}-${String(parsed.day).padStart(2, '0')}`
+    : DEFAULT_EXAM_DATE.slice(0, 10)
+
+  const startTime = eventTime ?? `${baseDate}T09:00:00+09:00`
+  const endTime = eventEndTime ?? `${baseDate}T12:00:00+09:00`
 
   return {
     summary: `📝 [${qualification}] 시험일`,

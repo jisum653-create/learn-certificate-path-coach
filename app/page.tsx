@@ -1546,17 +1546,17 @@ function ProfileWidget({ profile, onSave, isMobile }: { profile: Profile; onSave
     setLocal(profile)
   }, [profile])
 
-  const fields: { key: ProfileStringKey; label: string }[] = [
-    { key: '진로', label: '진로 / 관심 직무' },
-    { key: '학습방식', label: '학습 방식' },
-    { key: '비용선호', label: '비용 선호' },
-    { key: '예산', label: '예산' },
-    { key: '가용시간', label: '가용 시간' },
-    { key: '목표시기', label: '목표 시기' },
-    { key: '목표회차', label: '목표 회차' },
-    { key: '관심공고', label: '관심 공고' },
-    { key: '영어성적', label: '영어 성적' },
-    { key: '유효기간자산', label: '유효기간 자산' },
+  const fields: { key: ProfileStringKey; label: string; example?: string }[] = [
+    { key: '진로', label: '진로 / 관심 직무', example: 'IT/개발, 사무·행정, 디자인, 전기·전자, 회계, 데이터 분석, 간호·보건 등' },
+    { key: '학습방식', label: '학습 방식', example: '독학, 학원 수강, 온라인 강의, 문제풀이 중심, 실습 중심 등' },
+    { key: '비용선호', label: '비용 선호', example: '무료 우선, 유료 강의 허용, 예산 내 투자 가능 등' },
+    { key: '예산', label: '예산', example: '10만원 이하, 30만원 정도, 무제한 등' },
+    { key: '가용시간', label: '가용 시간', example: '하루 2시간, 주 10시간, 평일 저녁 1시간 등' },
+    { key: '목표시기', label: '목표 시기', example: '3개월 내, 6월 시험, 올해 안 등' },
+    { key: '목표회차', label: '목표 회차', example: '2026년 2회차, 다음 시험 등' },
+    { key: '관심공고', label: '관심 공고', example: '개발자 신입 채용, 공공기관 행정직, 데이터 분석 직무 등' },
+    { key: '영어성적', label: '영어 성적', example: ' 토익 800, 오픽 IH, 없음, 준비 중 등' },
+    { key: '유효기간자산', label: '유효기간 자산', example: '컴활 1급(2020 취득, 유효 5년), 토익(2024.06 만료) 등' },
   ]
 
   const listFields: { key: ProfileArrayKey; label: string }[] = [
@@ -1701,8 +1701,8 @@ function ProfileWidget({ profile, onSave, isMobile }: { profile: Profile; onSave
   )
 }
 
-// ---------- 프로필 텍스트 필드 ----------
-function ProfileTextField({ field, value, onChange, isMobile }: { field: { key: ProfileStringKey; label: string }; value: string; onChange: (v: string) => void; isMobile?: boolean }) {
+// ---------- 프로필 텍스트 필드 (예시 포함) ----------
+function ProfileTextField({ field, value, onChange, isMobile }: { field: { key: ProfileStringKey; label: string; example?: string }; value: string; onChange: (v: string) => void; isMobile?: boolean }) {
   return (
     <div>
       <label
@@ -1718,6 +1718,11 @@ function ProfileTextField({ field, value, onChange, isMobile }: { field: { key: 
         }}
       >
         {field.label}
+        {field.example && (
+          <span style={{ color: tokens.colors.mutedLight, marginLeft: tokens.spacing.xs, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>
+            ({field.example})
+          </span>
+        )}
       </label>
       <input
         type="text"
@@ -2400,6 +2405,63 @@ function ChatIcon({ open }: { open: boolean }) {
 }
 
 // ============================================================
+//  OnboardingBanner (첫 방문 기능 안내)
+// ============================================================
+function OnboardingBanner() {
+  return (
+    <div
+      style={{
+        margin: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
+        padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
+        background: tokens.colors.accentBg,
+        border: '1px solid',
+        borderColor: tokens.colors.accentLight,
+        borderRadius: tokens.radius.md,
+        boxShadow: tokens.shadows.raised,
+      }}
+    >
+      <div
+        style={{
+          fontSize: tokens.type.captionStrong.size,
+          fontWeight: tokens.type.captionStrong.weight,
+          color: tokens.colors.accent,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.captionStrong.tracking,
+          textTransform: 'uppercase',
+          marginBottom: tokens.spacing.sm,
+        }}
+      >
+        💡 사용 방법 안내
+      </div>
+      <p
+        style={{
+          fontSize: tokens.type.bodySmall.size,
+          color: tokens.colors.ink,
+          fontFamily: tokens.fonts.family,
+          letterSpacing: tokens.type.bodySmall.tracking,
+          lineHeight: 1.5,
+          margin: 0,
+        }}
+      >
+        이 서비스는{' '}
+        <strong>좌측 채팅</strong>으로 코치와 대화하고,{' '}
+        <strong>오른쪽 대시보드</strong>에서 추천 결과·시험 일정·학습 계획을 확인하는 구조예요.
+        <br /><br />
+        ① 좌측 채팅창에 희망 직무나 관심 분야를 입력하면 조건에 맞는 자격증을 추천해요.
+        <br />
+        ② 추천 후 오른쪽 <strong>추천 탭</strong>에서 1순위+대안+학습 경로를 확인할 수 있어요.
+        <br />
+        ③ <strong>프로필 탭</strong>에서 학습 방식·비용·예산·가용 시간·관심 공고를 직접 입력할 수 있어요.
+        <br />
+        ④ 대화 중 <strong>"정보처리기사 일정 알려줘"</strong>처럼 물으면 시험 일정을 공식에서 가져와요.
+        <br />
+        ⑤ <strong>"준비 시작할래"</strong>라고 말하면 주차별 학습 계획이 만들어져요.
+      </p>
+    </div>
+  )
+}
+
+// ============================================================
 //  MAIN PAGE
 // ============================================================
 export default function Home() {
@@ -2465,11 +2527,20 @@ export default function Home() {
         if (res.profileUpdate) {
           setProfile(prev => ({ ...prev, ...res.profileUpdate }))
         }
-      } else if (res.recommendation) {
-        setRec(res.recommendation)
-        const ok = profile.저장동의 !== true
-        if (ok) setShownConsent(true)
-        setMessages(prev => [...prev, { role: 'bot', text: '자격증 추천을 준비했어요. 아래 대시보드에서 결과를 확인할 수 있어요.', meta: 'done' }])
+      } else if (res.type === 'recommend') {
+        if (res.recommendation) {
+          setRec(res.recommendation)
+          const ok = profile.저장동의 !== true
+          if (ok) setShownConsent(true)
+          setMessages(prev => [...prev, { role: 'bot', text: '자격증 추천을 준비했어요. 오른쪽 대시보드의 추천 탭을 클릭하면 결과를 확인할 수 있어요.', meta: 'done' }])
+          setMessages(prev => [...prev, { role: 'bot', text: '추천 결과가 도움이 되셨나요? 더 자세히 알고 싶은 자격증이 있으면 말씀해 주세요. 아니면 다른 자격증도 비교해볼 수 있어요. 준비 시작을 원하시면 "정보처리기사 준비 시작할래"처럼 말씀해 주세요.', meta: 'next' }])
+        } else {
+          // 추천 불가 케이스: suggestion 표시
+          const replyText = res.suggestion
+            ? `${res.message}\n\n${res.suggestion}`
+            : res.message || '추천할 자격증이 없어요. 더 정보를 알려주시면 다시 추천할게요.'
+          setMessages(prev => [...prev, { role: 'bot', text: replyText, meta: 'reply' }])
+        }
       } else if (res.schedule) {
         setSchedule(res.schedule)
         setMessages(prev => [...prev, { role: 'bot', text: '공식 시험 일정 정보를 가져왔어요. 아래 일정 탭에서 확인해요.', meta: 'done' }])
@@ -2497,7 +2568,10 @@ export default function Home() {
       } else if (res.type === 'calendar') {
         setMessages(prev => [...prev, { role: 'bot', text: res.message || '캘린더 등록 상태를 확인했어요.', meta: 'done' }])
       } else {
-        setMessages(prev => [...prev, { role: 'bot', text: res.message || res.text || '알겠어요. 더 필요한 정보가 있으면 알려드릴게요.', meta: 'reply' }])
+        const replyText = res.suggestion
+          ? `${res.message}\n\n${res.suggestion}`
+          : (res.message || res.text || '알겠어요. 더 필요한 정보가 있으면 알려드릴게요.')
+        setMessages(prev => [...prev, { role: 'bot', text: replyText, meta: 'reply' }])
       }
     } catch (e) {
       setMessages(prev => [...prev, { role: 'bot', text: '일시적 오류가 발생했어요. 다시 시도해 주세요.', meta: 'error' }])
@@ -2674,7 +2748,7 @@ export default function Home() {
               setSchedule(null)
               setPlan(null)
               setMessages([])
-              setMessages(prev => [...prev, { role: 'bot', text: '프로필과 대화 기록이 초기화되었어요. 처음부터 다시 시작할 수 있어요.', meta: 'reset' }])
+              setMessages(prev => [...prev, { role: 'bot', text: '프로필과 대화 기록이 초기화되었어요. 처음부터 다시 시작할게요. 희망하는 직무나 관심 있는 분야를 알려주시면 자격증을 추천해 드릴게요.', meta: 'reset' }])
             }}
             style={{
               fontSize: tokens.type.micro.size,
@@ -2827,6 +2901,9 @@ export default function Home() {
                 minHeight: 320,
               }}
             >
+              {messages.length === 0 && (
+                <OnboardingBanner />
+              )}
               {messages.length === 0 && (
                 <div
                   style={{

@@ -253,7 +253,7 @@ Calendar·Notion 저장은 실제 연동 완료를 전제로 한 목표 동작�
 **문제**: 이전 사이클에서 `/api/study-plan/route.ts`에 Notion API 호출 코드가 있었으나, Authorization 헤더가 `*** ${token},` 형태로 깨져 있어 실제 Notion 페이지 생성이 불가능했고, 프론트에서 Notion 토큰·부모 페이지 ID를 입력받아 연결하는 UI 핸들러도 없었다. 또한 `app/page.tsx`의 lazy initializer(`useState(() => localStorage.getItem(...))`)가 SSR 프리렌더 시점에 실행되어 `localStorage is not defined` 오류가 발생, 프로덕션 빌드가 실패하는 상태였다.
 
 **해결**:
-1. `app/api/study-plan/route.ts` line 189 — `Authorization: *** ${token},` → `Authorization: Bearer ${token}` 수정. Notion API 호출 시 올바른 Bearer 스킴 사용(토큰 미포함/잘못된 토큰 시 Notion API 401 반환).
+1. `app/api/study-plan/route.ts` line 189 — `Authorization: *** ${token},` → ``Authorization: `Bearer ${token}`` 수정(백틱 템플릿 리터럴 + Bearer 스킴). Notion API 호출 시 올바른 Bearer 스킴 사용(토큰 미포함/잘못된 토큰 시 Notion API 401 반환).
 2. `app/page.tsx` — `loadProfile()`, `loadMessages()`에 `typeof window === 'undefined' || typeof localStorage === 'undefined'` 가드 추가. `notionToken`, `notionParentPageId` `useState` lazy initializer에도 동일 가드 추가.
 3. `app/page.tsx` — `handleNotionConnect()` 함수 추가: P1 탭에서 Notion 통합 토큰·부모 페이지 ID 입력 → `/api/study-plan` POST(`consent: true, notionToken, notionParentPageId` 포함) → 성공 시 `notionPageUrl` 반환 + localStorage(`certCoachNotionToken`, `certCoachNotionParentPageId`) 저장, 실패/미연결 시 텍스트 계획 + 대체 안내(실패 사실과 반영 범위 구분).
 4. `.gitignore` — 테스트 파일(`extract_runtime_test.js`, `fix_auth.py`) 제외 추가.

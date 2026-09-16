@@ -12,27 +12,23 @@ import { google } from 'googleapis'
 //   동의 x → { status: 'consent_needed' }
 
 const DEFAULT_EXAM_DATE = '2026년 하반기 (공식 일정 확인 필요)'
-const LOCATION_UNCONFIRMED = '시험장 (공식 발표 시 확정)'
-const DESCRIPTION_UNCONFIRMED = '자격증 패스 코치가 확인한 공식 확정 일정이에요.\n문의: 시험 주관기관 공식 홈페이지'
+const DEFAULT_LOCATION = '시험장 (공식 발표 시 확정)'
+const DEFAULT_DESCRIPTION = '자격증 패스 코치가 확인한 공식 확정 일정이에요.\n문의: 시험 주관기관 공식 홈페이지'
 
 function buildEvent({
   qualification,
   examDate,
-  examTime,
   eventTime,
   eventEndTime,
 }: {
   qualification: string
   examDate: string
-  examTime?: string
   eventTime?: string
   eventEndTime?: string
 }) {
   // 시험일 파싱: "YYYY년 MM월 DD일" 또는 "YYYY-MM-DD" 또는 "YYYY.MM.DD" 형식
-  // ⚠️ DEFAULT_EXAM_DATE 같은 확인 불가 값은 파싱 실패 → 이벤트 생성 불가
   const parseExamDate = (raw: string): { year: number; month: number; day: number } | null => {
     if (!raw || raw === '공식 일정 확인 필요' || raw === DEFAULT_EXAM_DATE) return null
-    if (raw.includes('공식 일정 확인 필요') || raw.includes('공식 일정 미발표')) return null
     let m: RegExpMatchArray | null
     if ((m = raw.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/))) {
       return { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) }
@@ -47,21 +43,18 @@ function buildEvent({
   }
 
   const parsed = parseExamDate(examDate)
-  if (!parsed) {
-    // 파싱 실패: 공식 확정 일정이 아님 → 이벤트 생성하지 않음
-    return null
-  }
+  // 시험 당일 시간 지정 가능하면 ISO 시간 사용, 없으면 파싱된 시험일 09:00-12:00
+  const baseDate = parsed
+    ? `${parsed.year}-${String(parsed.month).padStart(2, '0')}-${String(parsed.day).padStart(2, '0')}`
+    : DEFAULT_EXAM_DATE.slice(0, 10)
 
-  const baseDate = `${parsed.year}-${String(parsed.month).padStart(2, '0')}-${String(parsed.day).padStart(2, '0')}`
-
-  // explicit examTime이 있으면 우선 사용, 없으면 시험일 09:00-12:00
-  const startTime = examTime ?? eventTime ?? `${baseDate}T09:00:00+09:00`
+  const startTime = eventTime ?? `${baseDate}T09:00:00+09:00`
   const endTime = eventEndTime ?? `${baseDate}T12:00:00+09:00`
 
   return {
     summary: `📝 [${qualification}] 시험일`,
-    description: DESCRIPTION_UNCONFIRMED,
-    location: LOCATION_UNCONFIRMED,
+    description: DEFAULT_DESCRIPTION,
+    location: DEFAULT_LOCATION,
     start: {
       dateTime: startTime,
       timeZone: 'Asia/Seoul',
@@ -73,8 +66,8 @@ function buildEvent({
     reminders: {
       useDefault: false,
       overrides: [
-        { method: 'email', minutes: 24 * 60 },
-        { method: 'popup', minutes: 60 },
+        { method: 'email', minutes: 24 * 60 }, // 시험 1일 전 이메일 알림
+        { method: 'popup', minutes: 60 }, // 시험 1시간 전 팝업 알림
       ],
     },
   }
@@ -100,19 +93,9 @@ export async function POST(req: NextRequest) {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
   if (!clientId || !clientSecret) {
-    const missing: string[] = []
-    if (!process.env.GOOGLE_CLIENT_ID) missing.push('GOOGLE_CLIENT_ID')
-    if (!process.env.GOOGLE_CLIENT_SECRET) missing.push('GOOGLE_CLIENT_SECRET')
-    if (!process.env.GOOGLE_REDIRECT_URI) missing.push('GOOGLE_REDIRECT_URI')
     return NextResponse.json(
-      {
-        status: 'unavailable',
-        message: `Google Calendar OAuth 환경변수${missing.length > 0 ? '가 설정되지 않았어요: ' + missing.join(', ') : ' 설정 오류'}`,
-        detail: missing.length > 0
-          ? `Vercel 프로젝트 설정에서 ${missing.join(', ')} 환경변수를 추가해 주세요. (OAuth 동의 화면의 redirect URI도 ${process.env.GOOGLE_REDIRECT_URI || '설정 필요'}로 등록해야 해요.)`
-          : '관리자에게 문의해 주세요.',
-      },
-      { status: 503 },
+      { status: 'unavailable', message: 'Google Calendar OAuth 환경변수 설정 오류' },
+      { status: 503 }
     )
   }
 
@@ -157,8 +140,8 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  const examTime = body.examTime?.toString()
-  const bodyExamTime = body.eventTime?.toString()
+  // 시간 관련 입력 파싱
+  const examTime = body.eventTime?.toString()
   const examEndTime = body.eventEndTime?.toString()
 
   const timeWarning = validateTimeWindow(examDate)
@@ -170,15 +153,7 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // buildEvent: 파싱 가능한 공식 일정만 이벤트 생성, 불가하면 null 반환
-  const event = buildEvent({ qualification, examDate, examTime: examTime ?? bodyExamTime, eventEndTime: examEndTime })
-  if (!event) {
-    return NextResponse.json({
-      status: 'unavailable',
-      message: '공식 확정된 시험 일정을 찾을 수 없어요. 캘린더에 등록하기 전에 시험일을 확인해 주세요. (예: "2026년 10월 15일" 형식)',
-      preview: [{ title: `[${qualification}] 시험일`, date: examDate, note: '공식 확정 일정만 등록 대상' }],
-    })
-  }
+  const event = buildEvent({ qualification, examDate, eventTime: examTime, eventEndTime: examEndTime })
 
   // Google Calendar API 호출
   const oauth2Client = new google.auth.OAuth2(clientId, clientSecret)
@@ -237,10 +212,7 @@ export async function GET(req: NextRequest) {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
   if (!clientId || !clientSecret) {
-    const missing: string[] = []
-    if (!process.env.GOOGLE_CLIENT_ID) missing.push('GOOGLE_CLIENT_ID')
-    if (!process.env.GOOGLE_CLIENT_SECRET) missing.push('GOOGLE_CLIENT_SECRET')
-    return NextResponse.json({ connectorReady: false, error: `환경변수 누락: ${missing.join(', ')}` }, { status: 503 })
+    return NextResponse.json({ connectorReady: false, error: '환경변수 오류' }, { status: 503 })
   }
 
   const tokenCookie = req.cookies.get('google_calendar_token')?.value

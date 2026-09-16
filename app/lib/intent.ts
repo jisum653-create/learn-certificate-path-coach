@@ -34,7 +34,7 @@ export interface IntentResult {
 const INIT_PAT = /(초기화|처음부터|다시\s*시작|리셋|reset|모두\s*지워|다\s*지워|처음으로|새출발|재시작)/i;
 const DELETE_PAT = /(대화\s*(?:기록\s*)?(?:지우|삭제|지워|없애|날려)|메시지\s*(?:지우|삭제|지워|없애)|기록\s*(?:지우|삭제|지워|없애)|채팅\s*(?:삭제|지우|지워|없애))/i;
 const PASSED_PAT = /(합격|땄|취득|시험\s*통과|결과\s*(?:나왔|합격|통과|발표|확정)|합격했어|합격했습니다|취득했어|땄어|통과했어)/i;
-const CHANGE_GOAL_PAT = /(목표(?:의\s*진로)?\s*(?:자격증|자격|진로|방향)(?:을|는|이|도|만)?\s*(?:바꾸|변경|수정|새로|다른|전환|옮겨?|바꿔|변경해|수정해)|자격증\s*(?:을|는|이|도|만)?\s*(?:바꾸|변경|바꿀|교체|전환|옮겨?|바꿔|변경해|수정해)|다른\s*자격증|추천\s*(?:다시|말고)|다른\s*거|이것\s*말고|다음으로|다른\s*방향|목표\s*(?:바꿔|변경해|수정해))/i;
+const CHANGE_GOAL_PAT = /(목표\s*(?:의\s*진로|를)?\s*(?:바꾸|변경|수정|새로|다른|전환|옮겨?|바꿔|변경해|수정해|바꾸고|바꾸고\s*싶|변경할래|수정할래|바꾸기|변경하기)|자격증\s*(?:을|는|이|도|만)?\s*(?:바꾸|변경|바꿀|교체|전환|옮겨?|바꿔|변경해|수정해)|다른\s*자격증|추천\s*(?:다시|말고)|다른\s*거|이것\s*말고|다음으로|다른\s*방향|목표\s*(?:바꿔|변경해|수정해))/i;
 const SCHEDULE_PAT = /(시험\s*(?:일정|날짜|날짜\s*알려|언제|언제\s*시험|시험\s*날짜|시험\s*일정)|접수\s*(?:일정|기간|날짜|시작|마감)|시험\s*칠|시험\s*볼|시험\s*예정|시험\s*계획|다음\s*시험|회차|시험\s*시행)/i;
 const PLAN_PAT = /(학습\s*(?:계획|스케줄|준비|공부|대비)|공부\s*(?:계획|스케줄|준비|루틴|방법)|준비\s*(?:계획|일정|방법)|어떻게\s*(?:준비|공부|시작)|계획\s*(?:세워|짜|만들어|짜줘)|준비\s*(?:시작|방법|로드맵)|며칠\s*남았|남은\s*기간|준비\s*기간|공부\s*시작|준비\s*스타트)/i;
 const PROFILE_PAT = /(프로필|내\s*정보|내\s*상황|진로|저장\s*(?:동의|정보)|보관|기록|프로필\s*(?:저장|업데이트|수정|추가|등록)|내게\s*맞게|나를\s*위해|내\s*조건)/i;
@@ -138,14 +138,8 @@ export function classifyIntent(text: string, profile: Profile): IntentResult {
     };
   }
 
-  // 8) 추천 요청 (확정 / 미확정)
-  if (RECOMMEND_PAT.test(t) || certConfirmed || goalStandard) {
-    const confirmed = certConfirmed && goalStandard;
-    return {
-      intent: confirmed ? 'recommend-confirmed' : 'recommend-unspecified',
-      message: confirmed
-        ? `${goalStandard}을(를) 목표로 추천해요.`
-        : '조건을 더 알려주시면 맞춤 추천해요.',
+  // 8) 추천 요청
+  if (RECOMMEND_PAT.test(t)) {
       certMentions,
       certConfirmed,
       goalStandard,

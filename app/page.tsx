@@ -2458,8 +2458,33 @@ export default function Home() {
     setMessages(prev => [...prev, userMsg])
     setLoading(true)
     try {
-      const res = await postJson('/api/recommend', { profile, message: text })
-      if (res.type === 'question') {
+      const res = await postJson('/api/agent', { profile, message: text })
+      if (res.type === 'agent') {
+        // 프로필 갱신 반영
+        if (res.profileUpdate) {
+          setProfile(prev => ({ ...prev, ...res.profileUpdate }))
+        }
+        // 액션별 대시보드 상태 업데이트
+        if (res.action === 'recommend' && res.data) {
+          setRec(res.data as RecResult)
+        } else if (res.action === 'schedule' && res.data) {
+          setSchedule({
+            qualification: (res.data as Record<string, unknown>).qualification as string || res.qualification || '',
+            items: ((res.data as Record<string, unknown>).schedule as ScheduleData['items']) || [],
+          } as ScheduleData)
+        } else if (res.action === 'study-plan' && res.data) {
+          setPlan(res.data as PlanData)
+        } else if (res.action === 'question') {
+          // 질문 타입: 별도 대시보드 변경 없이 답변만 표시
+        }
+        // 답변 메시지 표시
+        const meta = res.action === 'question' ? 'question' : (res.action === 'error' ? 'error' : 'done')
+        setMessages(prev => [...prev, { role: 'bot', text: res.message || '', meta }])
+        // 에러 정보가 있으면 추가 메시지로 표시
+        if (res.error) {
+          setMessages(prev => [...prev, { role: 'bot', text: `참고: ${res.error}`, meta: 'error' }])
+        }
+      } else if (res.type === 'question') {
         const q = (res.questions || []).map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')
         setMessages(prev => [...prev, { role: 'bot', text: q || '더 필요한 정보가 없어요. 추천할 준비가 되었어요.', meta: 'question' }])
         if (res.profileUpdate) {

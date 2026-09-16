@@ -2,7 +2,7 @@
 // URL 참조표 + 실제 페이지 추출(cheerio/jina) + CSV 보조 참조
 
 import { extractPage, extractMultipleUrls, ExtractedPage } from './extract';
-import { QUALIFICATION_URLS, REFERENCE_FILES, JOB_REQUIREMENT_PATTERNS } from './reference-data';
+import { QUALIFICATION_URLS, QUALIFICATION_DETAIL_URLS, REFERENCE_FILES, JOB_REQUIREMENT_PATTERNS } from './reference-data';
 
 // === 데이터 파싱 헬퍼 — 각 필드 독립 검증 ===
 // 반환: 각 필드마다 값 + 확인 여부 + 출처. 확인하지 못한 값은 추측하지 않음.
@@ -24,7 +24,7 @@ interface ParsedExamInfo {
   eligibilitySource: string
 }
 
-function parseExamInfoFromText(text: string, qualification: string, sourceUrl: string): ParsedExamInfo {
+export function parseExamInfoFromText(text: string, qualification: string, sourceUrl: string): ParsedExamInfo {
   const now = new Date()
   const 확인날짜 = now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
   const defaultSource = sourceUrl ? `공식 홈페이지 (${sourceUrl})` : '주관기관 공식 홈페이지'
@@ -216,13 +216,15 @@ export interface ScheduleItem {
 }
 
 export async function getQualificationSchedule(qualification: string): Promise<ScheduleItem[]> {
-  const url = QUALIFICATION_URLS[qualification] || ''
-  const source = url ? `공식 홈페이지 (${url})` : '주관기관 공식 홈페이지';
-  const now = new Date();
-  const 확인날짜 = now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+  const detailUrls = QUALIFICATION_DETAIL_URLS[qualification]
+  const scheduleUrl = detailUrls?.schedule
+  const introUrl = QUALIFICATION_URLS[qualification] || ''
+  const sourceBase = scheduleUrl || introUrl ? `공식 홈페이지 (${scheduleUrl || introUrl})` : '주관기관 공식 홈페이지'
+  const now = new Date()
+  const 확인날짜 = now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
 
-  // 공식 URL이 없으면 기본 템플릿
-  if (!url) {
+  // 공식 URL이 전혀 없으면 기본 템플릿
+  if (!scheduleUrl && !introUrl) {
     return [
       { label: '접수 시작', value: '미확인 — 공식 일정 미발표', source: '주관기관 공식 홈페이지', note: 'web_extract로 주관기관 일정 공지 원문 확인 필요' },
       { label: '시험일', value: '공식 일정 미발표', source: '주관기관 공식 홈페이지', note: '웹리서치+web_extract로 공식 일정 확인 필요' },
@@ -230,46 +232,50 @@ export async function getQualificationSchedule(qualification: string): Promise<S
       { label: '응시자격', value: '미확인 — 공식 응시자격 확인 필요', source: '주관기관 공식 홈페이지', note: 'web_extract로 응시자격 안내 확인 필요' },
       { label: '공식 접수 페이지', value: '주관기관 공식 웹사이트', source: '주관기관 공식 홈페이지' },
       { label: '확인 날짜', value: 확인날짜, source: '서비스 내부 확인 시각' },
-    ];
+    ]
   }
 
-  // 실제 URL에서 추출 시도
+  // 실제 URL에서 추출 시도 — 일정 페이지를 우선 방문
   try {
-    const extracted = await extractPage(url);
+    // 1순위: 실제 일정 페이지 (QUALIFICATION_DETAIL_URLS.schedule)
+    const extracted = scheduleUrl
+      ? await extractPage(scheduleUrl)
+      : await extractPage(introUrl)
 
     if (extracted.method === 'none' || !extracted.content) {
       // 추출 실패 시 보조 참조
+      const failUrl = scheduleUrl || introUrl
       return [
-        { label: '접수 시작', value: '미확인 — 공식 일정 미발표 (웹추출 실패)', source: `${url}`, note: 'web_extract로 원문 재확인 필요, 참고자료(CSV) 보조 가능' },
-        { label: '시험일', value: '공식 일정 미발표', source: `${url}`, note: '웹리서치+웹추출로 공식 일정 확인 필요' },
-        { label: '응시료', value: '미확인 — 공식 응시료 확인 필요', source: `${url}`, note: '웹추출로 응시료 페이지 확인 필요, 참고자료(CSV) 보조 가능' },
-        { label: '응시자격', value: '미확인 — 공식 응시자격 확인 필요', source: `${url}`, note: '웹추출로 응시자격 안내 확인 필요' },
-        { label: '공식 접수 페이지', value: url, source: '주관기관 공식 웹사이트', note: '직접 접속 확인 권장' },
+        { label: '접수 시작', value: '미확인 — 공식 일정 미발표 (웹추출 실패)', source: `${failUrl}`, note: 'web_extract로 원문 재확인 필요, 참고자료(CSV) 보조 가능' },
+        { label: '시험일', value: '공식 일정 미발표', source: `${failUrl}`, note: '웹리서치+웹추출로 공식 일정 확인 필요' },
+        { label: '응시료', value: '미확인 — 공식 응시료 확인 필요', source: `${failUrl}`, note: '웹추출로 응시료 페이지 확인 필요, 참고자료(CSV) 보조 가능' },
+        { label: '응시자격', value: '미확인 — 공식 응시자격 확인 필요', source: `${failUrl}`, note: '웹추출로 응시자격 안내 확인 필요' },
+        { label: '공식 접수 페이지', value: introUrl, source: '주관기관 공식 웹사이트', note: '직접 접속 확인 권장' },
         { label: '확인 날짜', value: 확인날짜, source: '서비스 내부 확인 시각' },
-      ];
+      ]
     }
 
-    // 추출한 텍스트에서 정보 파싱
-    const info = parseExamInfoFromText(extracted.content, qualification, url)
+    // 추출한 텍스트에서 정보 파싱 — 실제 방문한 페이지 URL을 소스로 전달
+    const info = parseExamInfoFromText(extracted.content, qualification, scheduleUrl || introUrl)
 
     return [
       { label: '접수 시작', value: info.applyStart, source: info.applyStartSource, note: info.applyStartConfirmed ? 'web_extract로 공식 원문 확인 완료' : '공식 일정 미발표/미확인, web_extract로 재확인 필요', confirmed: info.applyStartConfirmed },
       { label: '시험일', value: info.examDate, source: info.examDateSource, note: info.examDateConfirmed ? 'web_extract로 공식 일정 확인됨' : '공식 일정 미발표, 회차별 공지 확인 필요', confirmed: info.examDateConfirmed },
       { label: '응시료', value: info.fee, source: info.feeSource, note: info.feeConfirmed ? 'web_extract로 응시료 확인 완료' : '공식 응시료 페이지 확인 필요', confirmed: info.feeConfirmed },
       { label: '응시자격', value: info.eligibility, source: info.eligibilitySource, note: info.eligibilityConfirmed ? 'web_extract로 응시자격 확인 완료' : '공식 응시자격 페이지 확인 필요', confirmed: info.eligibilityConfirmed },
-      { label: '공식 접수 페이지', value: url, source: '주관기관 공식 웹사이트', note: '직접 접속하여 원서접수·일정 확인 권장' },
-      { label: '확인 날짜', value: 확인날짜, source: '서비스 내부 확인 시각', note: 'PRD 데이터 규칙: 출처·기준 시각 표기' },
-    ];
-  } catch (err) {
-    console.error(`[getQualificationSchedule] ${qualification} 추출 오류:`, err);
-    return [
-      { label: '접수 시작', value: '미확인 — 추출 오류', source: url, note: `웹추출 중 오류 발생: ${err}` },
-      { label: '시험일', value: '공식 일정 미발표', source: url, note: '오류로 인한 확인 불가, 재시도 권장' },
-      { label: '응시료', value: '미확인', source: url, note: '추출 오류로 확인 불가' },
-      { label: '응시자격', value: '미확인', source: url, note: '추출 오류로 확인 불가' },
-      { label: '공식 접수 페이지', value: url, source: '주관기관 공식 웹사이트' },
+      { label: '공식 접수 페이지', value: introUrl, source: '주관기관 공식 웹사이트', note: '직접 접속하여 원서접수·일정 확인 권장' },
       { label: '확인 날짜', value: 확인날짜, source: '서비스 내부 확인 시각' },
-    ];
+    ]
+  } catch (err) {
+    console.error(`[getQualificationSchedule] ${qualification} 추출 오류:`, err)
+    return [
+      { label: '접수 시작', value: '미확인 — 추출 오류', source: scheduleUrl || introUrl, note: `웹추출 중 오류 발생: ${err}` },
+      { label: '시험일', value: '공식 일정 미발표', source: scheduleUrl || introUrl, note: '오류로 인한 확인 불가, 재시도 권장' },
+      { label: '응시료', value: '미확인', source: scheduleUrl || introUrl, note: '추출 오류로 확인 불가' },
+      { label: '응시자격', value: '미확인', source: scheduleUrl || introUrl, note: '추출 오류로 확인 불가' },
+      { label: '공식 접수 페이지', value: introUrl, source: '주관기관 공식 웹사이트' },
+      { label: '확인 날짜', value: 확인날짜, source: '서비스 내부 확인 시각' },
+    ]
   }
 }
 

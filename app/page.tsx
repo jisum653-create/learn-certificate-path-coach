@@ -22,7 +22,7 @@ type ProfileStringKey = '진로' | '학습방식' | '비용선호' | '예산' | 
 
 type ProfileArrayKey = '보유자격증' | '취득완료자격'
 
-type TabId = 'chat' | 'dashboard' | 'schedule' | 'plan' | 'profile' | 'p1'
+type TabId = 'dashboard' | 'schedule' | 'plan' | 'profile' | 'p1'
 
 interface Message {
   role: 'user' | 'bot'
@@ -1622,6 +1622,31 @@ function ProfileWidget({ profile, onSave, isMobile }: { profile: Profile; onSave
       </div>
 
       <div style={{ padding: tokens.spacing.lg }}>
+        {/* 입력 가이드 */}
+        <div style={{ marginBottom: tokens.spacing.md }}>
+          <div
+            style={{
+              fontSize: tokens.type.small.size,
+              color: tokens.colors.inkLight,
+              fontFamily: tokens.fonts.family,
+              letterSpacing: tokens.type.small.tracking,
+              lineHeight: 1.5,
+              marginBottom: tokens.spacing.sm,
+            }}
+          >
+            무엇을 입력하면 되는지 참고하세요. 비워두면 대화 중에 질문받아 채워져요.
+          </div>
+          <ExampleChips
+            items={[
+              '진로: IT 개발 / 데이터 분석 / 회계·세무 / 디자인',
+              '학습 방식: 개념 강의형 / 문제풀이형 / 독학형 / 혼합형',
+              '비용 선호: 완전 무료 / 강의 무료·교재 구매 / 유료 강의 허용 / 시간 절약 우선',
+              '가용 시간: 하루 1시간 / 하루 2시간 / 주말 집중 / 주 10시간',
+              '목표 시기: 2026년 하반기 / 6개월 이내 / 취업 전까지',
+              '보유 자격증: 정보처리산업기사, 컴활 2급',
+            ]}
+          />
+        </div>
         {/* 텍스트 필드 */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: tokens.spacing.sm }}>
           {fields.map(f => (
@@ -2496,8 +2521,8 @@ export default function Home() {
         setMessages(prev => [...prev, { role: 'bot', text: res.message || '유효기간 검토 결과를 확인했어요.', meta: 'done' }])
       } else if (res.type === 'calendar') {
         setMessages(prev => [...prev, { role: 'bot', text: res.message || '캘린더 등록 상태를 확인했어요.', meta: 'done' }])
-      } else {
-        setMessages(prev => [...prev, { role: 'bot', text: res.text || res.message || '알겠어요. 더 필요한 정보가 있으면 알려드릴게요.', meta: 'reply' }])
+      } else if (res.type === 'reply') {
+        setMessages(prev => [...prev, { role: 'bot', text: res.message || res.text || res.result?.message || '알겠어요. 더 필요한 정보가 있으면 알려드릴게요.', meta: 'reply' }])
       }
     } catch (e) {
       setMessages(prev => [...prev, { role: 'bot', text: '일시적 오류가 발생했어요. 다시 시도해 주세요.', meta: 'error' }])
@@ -2586,7 +2611,6 @@ export default function Home() {
     : (Object.keys(profile).length > 0 ? '저장 전' : '미설정')
 
   const tabs = [
-    ['chat', '대화'],
     ['dashboard', '추천'],
     ['schedule', '일정'],
     ['plan', '계획'],
@@ -2898,7 +2922,7 @@ export default function Home() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="메시지를 입력하세요 (Enter: 전송, Shift+Enter: 줄바꿈)"
+                  placeholder="예: IT 분야 자격증 추천해줘, 정보처리기사 일정 알려줘, 컴활 1급 준비 시작할래"
                   style={{
                     flex: 1,
                     padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,

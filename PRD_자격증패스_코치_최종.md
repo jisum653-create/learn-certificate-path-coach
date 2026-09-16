@@ -253,7 +253,7 @@ Calendar·Notion 저장은 실제 연동 완료를 전제로 한 목표 동작�
 **문제**: 이전 사이클에서 `/api/study-plan/route.ts`에 Notion API 호출 코드가 있었으나, Authorization 헤더가 `*** ${token},` 형태로 깨져 있어 실제 Notion 페이지 생성이 불가능했고, 프론트에서 Notion 토큰·부모 페이지 ID를 입력받아 연결하는 UI 핸들러도 없었다. 또한 `app/page.tsx`의 lazy initializer(`useState(() => localStorage.getItem(...))`)가 SSR 프리렌더 시점에 실행되어 `localStorage is not defined` 오류가 발생, 프로덕션 빌드가 실패하는 상태였다.
 
 **해결**:
-1. `app/api/study-plan/route.ts` line 189 — `Authorization: *** ${token}`, → `Authorization: \`Bearer ${token}\`` 수정. Notion API 호출 시 올바른 Bearer 스킴 사용.
+1. `app/api/study-plan/route.ts` line 189 — `Authorization: *** ${token},` → `Authorization: Bearer ${token}` 수정. Notion API 호출 시 올바른 Bearer 스킴 사용(토큰 미포함/잘못된 토큰 시 Notion API 401 반환).
 2. `app/page.tsx` — `loadProfile()`, `loadMessages()`에 `typeof window === 'undefined' || typeof localStorage === 'undefined'` 가드 추가. `notionToken`, `notionParentPageId` `useState` lazy initializer에도 동일 가드 추가.
 3. `app/page.tsx` — `handleNotionConnect()` 함수 추가: P1 탭에서 Notion 통합 토큰·부모 페이지 ID 입력 → `/api/study-plan` POST(`consent: true, notionToken, notionParentPageId` 포함) → 성공 시 `notionPageUrl` 반환 + localStorage(`certCoachNotionToken`, `certCoachNotionParentPageId`) 저장, 실패/미연결 시 텍스트 계획 + 대체 안내(실패 사실과 반영 범위 구분).
 4. `.gitignore` — 테스트 파일(`extract_runtime_test.js`, `fix_auth.py`) 제외 추가.
@@ -299,7 +299,7 @@ Calendar·Notion 저장은 실제 연동 완료를 전제로 한 목표 동작�
 
 **Vercel 환경변수**: `NAVER_API_CLIENT_ID`(길이 10), `NAVER_API_CLIENT_SECRET`(길이 40) — Vercel 대시보드 → Settings → Environment Variables → Production에 Secret으로 각각 추가 완료. 로컬 `.env.local`에도 동일 키 존재.
 
-**Vercel 프로덕션 배포**: `3572465` 커밋(githubapis stub alias) + `df26006` 커밋(네이버 API 웹 리서치 통합) 푸시 후 `npx vercel --prod` → 배포 성공, `READY` 상태. 프로덕션 URL: `https://learn-certificate-path-coach-dzezi6a9f.vercel.app` (alias: `https://learn-certificate-path-coach.vercel.app`)
+**Vercel 프로덕션 배포**: `3572465` 커밋(githubapis stub alias) + `df26006` 커밋(네이버 API 웹 리서치 통합) 푸시 후 `npx vercel --prod` → 배포 성공, `READY` 상태. 프로덕션 URL(alias): `https://learn-certificate-path-coach.vercel.app` (하위 배포 예시: `https://learn-certificate-path-coach-fv1ztgofv.vercel.app`)
 
 **제한/주의**:
 - 네이버 뉴스 검색 결과 ≠ 공식 자격증 정보. 최신 동향·채용 우대·시험일정 뉴스 수준으로만 활용하고, 공식 일정·비용은 공식 원문 확인 없이 확정하지 않음
@@ -331,10 +331,18 @@ Calendar·Notion 저장은 실제 연동 완료를 전제로 한 목표 동작�
 
 #### G. Vercel 프로덕션 배포 결과 (완료)
 
-- 프로덕션 URL: `https://learn-certificate-path-coach-dzezi6a9f.vercel.app` (alias: `https://learn-certificate-path-coach.vercel.app`)
+- 프로덕션 URL(alias): `https://learn-certificate-path-coach.vercel.app` (하위 배포 예시: `https://learn-certificate-path-coach-fv1ztgofv.vercel.app`)
 - 상태: `READY`, 대상: `production`
 - 환경변수(Production Secret): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `NAVER_API_CLIENT_ID`, `NAVER_API_CLIENT_SECRET` 모두 Secret 타입, 값 숨김
 - 클라이언트 소스·응답 JSON에 시크릿 노출 없음 (코드 스캔 확인 완료: `process.env.GOOGLE*|NAVER*` 패턴 0건, 하드코딩 값 0건)
+
+#### H. next.config.js 충돌 해결 + googleapis stub 제거 (완료)
+
+**문제**: 로컬의 `resolve.ignore` 제거 패치와 원격의 `resolve.alias` googleapis-stub 방식이 충돌. 또한 `config.resolve.ignore.push(/googleapis/)`가 Webpack 5 스키마에서 유효하지 않아 Vercel 빌드 오류 발생.
+
+**해결**: `next.config.js`를 단순 webpack `return config`(9줄, 152자)로 통일. `googleapis` 패키지는 `node_modules`에 이미 존재하므로 stub alias 불필요. 실제 Google Calendar/Notion 연동은 별도 패키지 설치·코드 대체 필요(5개 route stub 상태 유지).
+
+**결과**: `npx next build` exit 0 (로컬 빌드 통과), Vercel 배포 성공.
 
 **미완성/검증 필요**:
 - 프로덕션 `/api/recommend`가 "Protected deployment" (HTTP 401) 상태 — Vercel protection 설정 확인·해제 또는 인증 처리 필요
@@ -438,7 +446,7 @@ Calendar·Notion 저장은 실제 연동 완료를 전제로 한 목표 동작�
 || googleapis 빌드 stub | Google Calendar/Notion 연동 미완성 상태에서 빌드 막히던 route 5개를 stub alias로 빌드 통과. 실제 연동은 별도 완료 필요 | 11절 E |
 || Notion Authorization 헤더 수정 | `study-plan/route.ts` Bearer 스킴 누락·`\${token}` 이스케이프 깨짐 수정 (v2.1) | 11절 |
 || 기존 상세 내용 | P0 4개·P1 6개, 신규 참고문서 9종, 변경·유지 내역, 추출·빌드·복구·Excel 기록, 성공 기준 8개 유지 | 5·11·12절 |
-|| Vercel 프로덕션 배포 | `learn-certificate-path-coach` 프로젝트에 최신 코드 배포 완료, 프로덕션 URL: `https://learn-certificate-path-coach.vercel.app` (하위: `learn-certificate-path-coach-dzezi6a9f.vercel.app`), 환경변수 GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI + NAVER_API_CLIENT_ID/SECRET 모두 Secret 타입, 클라이언트 소스·응답 JSON 시크릿 노출 0건 확인 | 7·11절 G |
+||| Vercel 프로덕션 배포 | `learn-certificate-path-coach` 프로젝트에 최신 코드 배포 완료, 프로덕션 URL(alias): `https://learn-certificate-path-coach.vercel.app`, 환경변수 GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI + NAVER_API_CLIENT_ID/SECRET 모두 Secret 타입, 클라이언트 소스·응답 JSON 시크릿 노출 0건 확인 | 7·11절 G·H |
 
 미니 PRD의 'PDF 8pt·2쪽 내외'는 미니 개발 명세서 출력 조건이므로 A1 포스터에 적용하지 않는다. 포스터는 본문 26pt·소제목 28pt를 사용한다. 기존 문서의 API 라우트 총수 불일치는 임의로 채우지 않고 재확인 항목으로 남겼다.
 

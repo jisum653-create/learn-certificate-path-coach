@@ -298,7 +298,7 @@ function MessageBubble({ msg }: { msg: Message }) {
 }
 
 // ---------- 탭 버튼 ----------
-function TabButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+function TabButton({ active, label, onClick, isMobile }: { active: boolean; label: string; onClick: () => void; isMobile?: boolean }) {
   return (
     <button
       onClick={onClick}
@@ -308,7 +308,7 @@ function TabButton({ active, label, onClick }: { active: boolean; label: string;
         color: active ? tokens.colors.white : tokens.colors.ink,
         border: active ? 'none' : '1px solid',
         borderColor: active ? tokens.colors.accent : tokens.colors.hairline,
-        padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+        padding: `${isMobile ? tokens.spacing.xs : tokens.spacing.xs}px ${isMobile ? tokens.spacing.sm : tokens.spacing.md}px`,
         borderRadius: tokens.radius.pill,
         cursor: 'pointer',
         fontSize: tokens.type.utility.size,
@@ -446,7 +446,7 @@ function CardHeader({ title, subtitle, action }: { title: string; subtitle?: str
 // ============================================================
 //  캘린더 위젯 (Apple Calendar 스타일)
 // ============================================================
-function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
+function CalendarWidget({ schedule, isMobile }: { schedule: ScheduleData | null; isMobile?: boolean }) {
   const today = new Date()
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
@@ -576,6 +576,7 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
                     fontFamily: tokens.fonts.family,
                     padding: tokens.spacing.xs,
                     letterSpacing: tokens.type.small.tracking,
+                    lineHeight: 1.2,
                   }}
                 >
                   {d}
@@ -598,7 +599,7 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
             >
               {cells.map((day, idx) => {
                 if (day === null) {
-                  return <div key={`e${idx}`} style={{ aspectRatio: '1', borderRadius: tokens.radius.sm }} />
+                  return <div key={`e${idx}`} style={{ borderRadius: tokens.radius.sm, aspectRatio: isMobile ? 'auto' : '1' }} />
                 }
                 const isTodayCell = isToday(viewYear, viewMonth, day)
                 const isExam = isExamDay(viewYear, viewMonth, day)
@@ -609,7 +610,6 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
                   <div
                     key={day}
                     style={{
-                      aspectRatio: '1',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -632,6 +632,8 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
                       cursor: 'default',
                       position: 'relative',
                       transition: 'background 150ms ease, transform 150ms ease',
+                      padding: isMobile ? tokens.spacing.xs : 0,
+                      aspectRatio: isMobile ? 'auto' : '1',
                     }}
                   >
                     <span>{day}</span>
@@ -725,7 +727,7 @@ function CalendarWidget({ schedule }: { schedule: ScheduleData | null }) {
                   <div
                     key={i}
                     style={{
-                      padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                      padding: isMobile ? `${tokens.spacing.xs}px ${tokens.spacing.sm}px` : `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
                       background: tokens.colors.parchment,
                       borderRadius: tokens.radius.sm,
                       transition: 'background 150ms ease',
@@ -904,7 +906,7 @@ function ExampleChips({ items }: { items: string[] }) {
 // ============================================================
 //  계획 위젯 (Apple 스타일 타임라인)
 // ============================================================
-function PlanWidget({ plan }: { plan: PlanData | null }) {
+function PlanWidget({ plan, isMobile }: { plan: PlanData | null; isMobile?: boolean }) {
   if (!plan) {
     return (
       <Card>
@@ -965,7 +967,7 @@ function PlanWidget({ plan }: { plan: PlanData | null }) {
           background: tokens.colors.parchment,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: tokens.spacing.md }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'flex-start', justifyContent: 'space-between', gap: tokens.spacing.md }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
@@ -1033,9 +1035,10 @@ function PlanWidget({ plan }: { plan: PlanData | null }) {
               key={w.week}
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: tokens.spacing.md,
-                padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: isMobile ? tokens.spacing.xs : tokens.spacing.md,
+                padding: isMobile ? `${tokens.spacing.sm}px ${tokens.spacing.md}px` : `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
                 background: w.done ? tokens.colors.successBg : tokens.colors.parchment,
                 borderRadius: tokens.radius.md,
                 border: '1px solid',
@@ -1046,7 +1049,7 @@ function PlanWidget({ plan }: { plan: PlanData | null }) {
               {/* 주차 번호 배지 */}
               <div
                 style={{
-                  minWidth: 52,
+                  minWidth: isMobile ? 40 : 52,
                   padding: `${tokens.spacing.xxs}px ${tokens.spacing.xs}px`,
                   background: w.done ? tokens.colors.success : tokens.colors.accentBg,
                   borderRadius: tokens.radius.sm,
@@ -1079,7 +1082,7 @@ function PlanWidget({ plan }: { plan: PlanData | null }) {
               {/* 권장 시간 */}
               <div
                 style={{
-                  minWidth: 56,
+                  minWidth: isMobile ? 44 : 56,
                   textAlign: 'right',
                   fontSize: tokens.type.caption.size,
                   color: tokens.colors.muted,
@@ -1135,7 +1138,7 @@ function PlanWidget({ plan }: { plan: PlanData | null }) {
         <div
           style={{
             marginTop: tokens.spacing.md,
-            padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
+            padding: isMobile ? `${tokens.spacing.sm}px ${tokens.spacing.md}px` : `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
             background: 'linear-gradient(135deg, #0066cc, #0052a3)',
             borderRadius: tokens.radius.md,
             color: tokens.colors.white,
@@ -1161,7 +1164,7 @@ function PlanWidget({ plan }: { plan: PlanData | null }) {
               fontWeight: tokens.type.bodyStrong.weight,
               fontFamily: tokens.fonts.family,
               letterSpacing: tokens.type.bodyStrong.tracking,
-              lineHeight: 1.4,
+              lineHeight: isMobile ? 1.5 : 1.4,
             }}
           >
             {plan.briefing.task}
@@ -1401,7 +1404,7 @@ function RecommendationWidget({ rec, isMobile }: { rec: RecResult | null; isMobi
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
               gap: tokens.spacing.sm,
               fontSize: tokens.type.caption.size,
               color: tokens.colors.ink,
@@ -1533,7 +1536,7 @@ function WarningBlock({ label, content, type }: { label: string; content: string
 // ============================================================
 //  프로필 위젯
 // ============================================================
-function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Profile) => void }) {
+function ProfileWidget({ profile, onSave, isMobile }: { profile: Profile; onSave: (p: Profile) => void; isMobile?: boolean }) {
   const [local, setLocal] = useState<Profile>(profile)
 
   useEffect(() => {
@@ -1617,14 +1620,14 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
 
       <div style={{ padding: tokens.spacing.lg }}>
         {/* 텍스트 필드 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: tokens.spacing.sm }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: tokens.spacing.sm }}>
           {fields.map(f => (
-            <ProfileTextField key={f.key} field={f} value={local[f.key] || ''} onChange={(v) => handleChange(f.key, v)} />
+            <ProfileTextField key={f.key} field={f} value={local[f.key] || ''} onChange={(v) => handleChange(f.key, v)} isMobile={isMobile} />
           ))}
         </div>
 
         {/* 목록 필드 */}
-        <div style={{ marginTop: tokens.spacing.md, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: tokens.spacing.sm }}>
+        <div style={{ marginTop: tokens.spacing.md, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: tokens.spacing.sm }}>
           {listFields.map(f => (
             <ProfileListField key={f.key} field={f} value={(local[f.key] || []).join(', ')} onChange={(v) => handleListChange(f.key, v)} />
           ))}
@@ -1696,7 +1699,7 @@ function ProfileWidget({ profile, onSave }: { profile: Profile; onSave: (p: Prof
 }
 
 // ---------- 프로필 텍스트 필드 ----------
-function ProfileTextField({ field, value, onChange }: { field: { key: ProfileStringKey; label: string }; value: string; onChange: (v: string) => void }) {
+function ProfileTextField({ field, value, onChange, isMobile }: { field: { key: ProfileStringKey; label: string }; value: string; onChange: (v: string) => void; isMobile?: boolean }) {
   return (
     <div>
       <label
@@ -2961,7 +2964,7 @@ export default function Home() {
           <nav
             style={{
               display: 'flex',
-              gap: tokens.spacing.xs,
+              gap: isMobile ? tokens.spacing.xxs : tokens.spacing.xs,
               marginBottom: tokens.spacing.md,
               flexWrap: 'wrap',
               paddingBottom: tokens.spacing.sm,
@@ -2970,7 +2973,7 @@ export default function Home() {
             }}
           >
             {tabs.map(([id, label]) => (
-              <TabButton key={id} active={tab === id} label={label} onClick={() => setTab(id as TabId)} />
+              <TabButton key={id} active={tab === id} label={label} onClick={() => setTab(id as TabId)} isMobile={isMobile} />
             ))}
           </nav>
 

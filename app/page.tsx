@@ -842,7 +842,7 @@ function EmptyCalendar() {
       </div>
       <p style={{ margin: 0 }}>
         대화에서{' '}
-        <InlineAccent>"정보처리기사 일정 알려줘"</InlineAccent>처럼
+        <InlineAccent>&quot;정보처리기사 일정 알려줘&quot;</InlineAccent>처럼
         물어보면 공식 일정을 가져와서 여기에 표시해요.
       </p>
       <ExampleChips
@@ -941,7 +941,7 @@ function PlanWidget({ plan, isMobile }: { plan: PlanData | null; isMobile?: bool
           </div>
           <p style={{ margin: 0 }}>
             자격증 추천을 받은 뒤{' '}
-            <InlineAccent>"정보처리기사 준비 시작할래"</InlineAccent>라고 말하면
+            <InlineAccent>&quot;정보처리기사 준비 시작할래&quot;</InlineAccent>라고 말하면
             주차별 계획이 만들어져요.
           </p>
           <ExampleChips
@@ -1692,8 +1692,8 @@ function ProfileWidget({ profile, onSave, isMobile }: { profile: Profile; onSave
           }}
         >
           대화 중에{' '}
-          <InlineAccent>"내 목표가 바뀌었어"</InlineAccent> 또는{' '}
-          <InlineAccent>"비용 선호를 변경할래"</InlineAccent>라고 말해도 반영돼요.
+          <InlineAccent>&quot;내 목표가 바뀌었어&quot;</InlineAccent> 또는{' '}
+          <InlineAccent>&quot;비용 선호를 변경할래&quot;</InlineAccent>라고 말해도 반영돼요.
           이미 확인된 값은 함부로 바꾸지 않고 새 정보만 갱신해요.
         </p>
       </div>
@@ -2497,7 +2497,7 @@ export default function Home() {
       } else if (res.type === 'calendar') {
         setMessages(prev => [...prev, { role: 'bot', text: res.message || '캘린더 등록 상태를 확인했어요.', meta: 'done' }])
       } else {
-        setMessages(prev => [...prev, { role: 'bot', text: res.text || res.message || '알겠어요. 더 필요한 정보가 있으면 알려드릴게요.', meta: 'reply' }])
+        setMessages(prev => [...prev, { role: 'bot', text: res.message || res.text || '알겠어요. 더 필요한 정보가 있으면 알려드릴게요.', meta: 'reply' }])
       }
     } catch (e) {
       setMessages(prev => [...prev, { role: 'bot', text: '일시적 오류가 발생했어요. 다시 시도해 주세요.', meta: 'error' }])
@@ -3066,7 +3066,7 @@ export default function Home() {
                     margin: 0,
                   }}
                 >
-                  "취득했다"고 직접 말한 경우만 확정해요. 보유 자격증·등급을 확인하고 프로필에 추가(동의 시)해요.
+                  &quot;취득했다&quot;고 직접 말한 경우만 확정해요. 보유 자격증·등급을 확인하고 프로필에 추가(동의 시)해요.
                   <br /><br />
                   기존 자격증과 과도한 중복 후보는 낮추고, 새로운 직무 가치를 더하는 1순위+대안을 제시해요.
                   추가 자격증보다 프로젝트·실무·포트폴리오가 우선인 시점이면 솔직히 말해요.
@@ -3086,7 +3086,7 @@ export default function Home() {
                   }}
                 >
                   <strong>예시:</strong>{' '}
-                  "정보처리기사 취득했어" / "SQLD 시험 합격했어" / "다음엔 뭘 따면 좋을까?"
+                  &quot;정보처리기사 취득했어&quot; / &quot;SQLD 시험 합격했어&quot; / &quot;다음엔 뭘 따면 좋을까?&quot;
                 </div>
               </Card>
 

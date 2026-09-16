@@ -31,16 +31,16 @@ export interface WebResearchOutput {
 // Jina Reader (URL 콘텐츠 추출용, API 키 불필요)
 // ──────────────────────────────────────────────────────────────
 
-const JINA_READER_BASE = 'https://r.jina.ai/';
-const JINA_READER_TIMEOUT_MS = 30000;
+const JINA_READER_BASE = 'https://r.jina.ai/'
+const JINA_READER_TIMEOUT_MS = 10000 // 30→10초: 느린 외부 사이트로 인한 전체 지연 방지
 
 /** Jina Reader로 URL 콘텐츠 추출 (텍스트/마크다운) */
 export async function readUrlWithJina(url: string): Promise<string | null> {
-  const encodedUrl = encodeURIComponent(url);
-  const jinaUrl = `${JINA_READER_BASE}${encodedUrl}`;
+  const encodedUrl = encodeURIComponent(url)
+  const jinaUrl = `${JINA_READER_BASE}${encodedUrl}`
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), JINA_READER_TIMEOUT_MS);
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), JINA_READER_TIMEOUT_MS)
     const res = await fetch(jinaUrl, {
       method: 'GET',
       headers: {
@@ -48,19 +48,60 @@ export async function readUrlWithJina(url: string): Promise<string | null> {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
       signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    if (!res.ok) return null;
-    const text = await res.text();
-    return text.length > 30000 ? text.substring(0, 30000) + '\n\n...(이하 생략)' : text;
+    })
+    clearTimeout(timeout)
+    if (!res.ok) return null
+    const text = await res.text()
+    return text.length > 30000 ? text.substring(0, 30000) + '\n\n...(이하 생략)' : text
   } catch {
-    return null;
+    return null
   }
 }
 
-// ──────────────────────────────────────────────────────────────
-// 네이버 검색 API (NAVER API HUB — 뉴스 검색)
-// ──────────────────────────────────────────────────────────────
+// 이미 실패한 URL 추적 (재시도 방지)
+const failedUrls = new Set<string>()
+
+/** URL 방문: Jina Reader → extract.ts 폴백 */
+async function visitUrl(url: string, extractedAt: string): Promise<ExtractedPage | null> {
+  // 이미 실패한 URL은 재시도하지 않음 (전체 응답 지연 방지)
+  if (failedUrls.has(url)) return null
+
+  let content = ''
+  let method: ExtractedPage['method'] = 'none'
+  let title = url
+
+  // 1. Jina Reader 시도 (API 키 불필요)
+  const jinaContent = await readUrlWithJina(url)
+  if (jinaContent) {
+    // 봇 차단/유의미한 콘텐츠 부재 판정: 차단 안내 문구가 있으면 Jina 결과를 버림
+    const blocked = isBlockedPage(jinaContent)
+    if (!blocked) {
+      content = jinaContent
+      method = 'jina'
+      const firstLine = jinaContent.split('\n')[0]
+      const m = firstLine.match(/Content from: (.+)/)
+      if (m) title = m[1]
+    }
+  }
+
+  // 2. Jina Reader 실패 시 extract.ts (cheerio/fetch)
+  if (!content) {
+    const [extracted] = await extractMultipleUrls([url])
+    if (extracted.content) {
+      content = extracted.content
+      method = extracted.method
+      title = extracted.title || url
+    }
+  }
+
+  // 실패 기록 (이후 재시도 방지)
+  if (!content) {
+    failedUrls.add(url)
+  }
+
+  if (!content) return null
+  return { url, title, content, extractedAt, method }
+}
 
 const NAVER_SEARCH_BASE = 'https://naverapihub.apigw.ntruss.com/search/v1/news';
 const NAVER_SEARCH_TIMEOUT_MS = 20000;
@@ -209,16 +250,21 @@ export async function webResearch(
       : (officialUrls || []);
 
     if (targetUrls.length > 0) {
-      for (const url of targetUrls.slice(0, maxPages)) {
-        const page = await visitUrl(url, extractedAt);
-        if (page) pages.push(page);
+      // 순차 → 병렬: 느린 외부 사이트로 인한 전체 응답 지연 방지
+      const results = await Promise.allSettled(
+        targetUrls.slice(0, maxPages).map(url => visitUrl(url, extractedAt)),
+      )
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) pages.push(r.value)
       }
     } else if (searchResult.error && officialUrls && officialUrls.length > 0) {
       // 검색 실패 시 공식 URL로 대체
-      searchResult = { ...searchResult, extractedUrls: officialUrls };
-      for (const url of officialUrls.slice(0, maxPages)) {
-        const page = await visitUrl(url, extractedAt);
-        if (page) pages.push(page);
+      searchResult = { ...searchResult, extractedUrls: officialUrls }
+      const results = await Promise.allSettled(
+        officialUrls.slice(0, maxPages).map(url => visitUrl(url, extractedAt)),
+      )
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) pages.push(r.value)
       }
     }
   } else {
@@ -232,48 +278,16 @@ export async function webResearch(
       error: !officialUrls ? '네이버 API 미설정 & 방문할 공식 URL 없음' : undefined,
     };
     if (officialUrls) {
-      for (const url of officialUrls.slice(0, maxPages)) {
-        const page = await visitUrl(url, extractedAt);
-        if (page) pages.push(page);
+      const results = await Promise.allSettled(
+        officialUrls.slice(0, maxPages).map(url => visitUrl(url, extractedAt)),
+      )
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) pages.push(r.value)
       }
     }
   }
 
   return { query, search: searchResult, pages, extractedAt };
-}
-
-/** URL 방문: Jina Reader → extract.ts 폴백 */
-async function visitUrl(url: string, extractedAt: string): Promise<ExtractedPage | null> {
-  let content = '';
-  let method: ExtractedPage['method'] = 'none';
-  let title = url;
-
-  // 1. Jina Reader 시도 (API 키 불필요)
-  const jinaContent = await readUrlWithJina(url);
-  if (jinaContent) {
-    // 봇 차단/유의미한 콘텐츠 부재 판정: 차단 안내 문구가 있으면 Jina 결과를 버림
-    const blocked = isBlockedPage(jinaContent);
-    if (!blocked) {
-      content = jinaContent;
-      method = 'jina';
-      const firstLine = jinaContent.split('\n')[0];
-      const m = firstLine.match(/Content from: (.+)/);
-      if (m) title = m[1];
-    }
-  }
-
-  // 2. Jina Reader 실패 시 extract.ts (cheerio/fetch)
-  if (!content) {
-    const [extracted] = await extractMultipleUrls([url]);
-    if (extracted.content) {
-      content = extracted.content;
-      method = extracted.method;
-      title = extracted.title || url;
-    }
-  }
-
-  if (!content) return null;
-  return { url, title, content, extractedAt, method };
 }
 
 /** 웹 리서치 + Solar 프롬프트용 텍스트 조립 */
